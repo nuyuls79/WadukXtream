@@ -1131,29 +1131,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                         updateFocusView(lastFocus.get(), same = true)
                     }, 200)
                 }
-
-                /*
-
-                the following is working, but somewhat bad code code
-
-                if (!wasGone) {
-                    (focusOutline.parent as? ViewGroup)?.let {
-                        TransitionManager.endTransitions(it)
-                        TransitionManager.beginDelayedTransition(
-                            it,
-                            TransitionSet().addTransition(ChangeBounds())
-                                .addTransition(ChangeTransform())
-                                .setDuration(100)
-                        )
-                    }
-                }
-
-                focusOutline.layoutParams = focusOutline.layoutParams?.apply {
-                    width = newFocus.measuredWidth
-                    height = newFocus.measuredHeight
-                }
-                focusOutline.translationX = x.toFloat()
-                focusOutline.translationY = y.toFloat()*/
             }
         }
     }
@@ -1329,27 +1306,33 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         } else if (lastError == null) {
             ioSafe {
                 // =================================================================
-                // CUSTOM REPO & AUTO-DOWNLOAD INJECTION START
+                // 1. INJEKSI REPO & BYPASS SETUP (Langsung aktifkan)
                 // =================================================================
                 try {
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
                     loadRepository(customRepoUrl)
-                    
-                    // 1. PAKSA PENGATURAN "AUTO DOWNLOAD" JADI AKTIF (Value 1 = Always)
-                    // Ini membuat PluginManager otomatis mengunduh plugin yang belum ada
-                    settingsManager.edit().putInt(getString(R.string.auto_download_plugins_key), 1).apply()
-                    
-                    // 2. PAKSA BYPASS SETUP WIZARD (PERINGATAN)
-                    // Ini membuat aplikasi menganggap user sudah menyetujui setup di awal
-                    setKey(HAS_DONE_SETUP_KEY, true)
 
-                    Log.d(TAG, "Custom repo injected, Auto-Download Forced, Setup Skipped.")
+                    // Paksa Auto-Download = ALWAYS (1) agar langsung download tanpa tanya
+                    settingsManager.edit().putInt(getString(R.string.auto_download_plugins_key), 1).apply()
+                    // Lewati Setup Wizard
+                    setKey(HAS_DONE_SETUP_KEY, true)
+                    Log.d(TAG, "Repo Injected & Auto-Download Forced.")
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to auto-inject repository", e)
+                    Log.e(TAG, "Injection failed", e)
                 }
+
                 // =================================================================
-                // INJECTION END
+                // 2. DOWNLOAD PLUGIN SECARA PAKSA (Agar tidak perlu restart)
                 // =================================================================
+                // Kita panggil fungsi download INI DULUAN sebelum load lainnya
+                try {
+                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
+                        this@MainActivity,
+                        AutoDownloadMode.Always // Paksa mode Always
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Forced download failed", e)
+                }
 
                 DataStoreHelper.currentHomePage?.let { homeApi ->
                     mainPluginsLoadedEvent.invoke(loadSinglePlugin(this@MainActivity, homeApi))
@@ -1357,35 +1340,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                     mainPluginsLoadedEvent.invoke(false)
                 }
 
+                // Load ulang plugin online untuk memastikan (Update check)
                 ioSafe {
-                    if (settingsManager.getBoolean(
-                            getString(R.string.auto_update_plugins_key),
-                            true
-                        )
-                    ) {
-                        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(
-                            this@MainActivity
-                        )
-                    } else {
-                        ___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(this@MainActivity)
-                    }
-
-                    // KODE INI AKAN MEMBACA PENGATURAN YANG KITA PAKSA DI ATAS (Value = 1)
-                    // DAN AKAN MENDOWNLOAD SEMUA PLUGIN SECARA OTOMATIS
-                    val autoDownloadPlugin = AutoDownloadMode.getEnum(
-                        settingsManager.getInt(
-                            getString(R.string.auto_download_plugins_key),
-                            0
-                        )
-                    ) ?: AutoDownloadMode.Disable
-                    if (autoDownloadPlugin != AutoDownloadMode.Disable) {
-                        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
-                            this@MainActivity,
-                            autoDownloadPlugin
-                        )
-                    }
+                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(
+                        this@MainActivity
+                    )
                 }
 
+                // Load plugin lokal (yang barusan didownload)
                 ioSafe {
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllLocalPlugins(
                         this@MainActivity,
