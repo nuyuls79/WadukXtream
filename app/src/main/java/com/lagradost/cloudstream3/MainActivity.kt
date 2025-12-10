@@ -433,8 +433,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             } catch (_: Throwable) {
             }
         }
-    } // <--- INI KUNCI PENTING: MENUTUP COMPANION OBJECT
-    var lastPopup: SearchResponse? = null
+    }     var lastPopup: SearchResponse? = null
     fun loadPopup(result: SearchResponse, load: Boolean = true) {
         lastPopup = result
         val syncName = syncViewModel.syncName(result.apiName)
