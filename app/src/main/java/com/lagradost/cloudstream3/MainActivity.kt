@@ -91,6 +91,7 @@ import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins
 import com.lagradost.cloudstream3.plugins.PluginManager.loadSinglePlugin
+import com.lagradost.cloudstream3.plugins.AutoDownloadMode // <--- INI KUNCINYA BRO
 import com.lagradost.cloudstream3.receivers.VideoDownloadRestartReceiver
 import com.lagradost.cloudstream3.services.SubscriptionWorkManager
 import com.lagradost.cloudstream3.syncproviders.AccountManager
@@ -1306,29 +1307,29 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         } else if (lastError == null) {
             ioSafe {
                 // =================================================================
-                // 1. INJEKSI REPO & BYPASS SETUP (Langsung aktifkan)
+                // 1. INJEKSI REPO & BYPASS SETUP (Logic Utama)
                 // =================================================================
                 try {
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
                     loadRepository(customRepoUrl)
 
-                    // Paksa Auto-Download = ALWAYS (1) agar langsung download tanpa tanya
+                    // Set Auto-Download ke ALWAYS (1) agar tidak perlu konfirmasi
                     settingsManager.edit().putInt(getString(R.string.auto_download_plugins_key), 1).apply()
-                    // Lewati Setup Wizard
+                    // Bypass Setup Wizard (langsung ke home)
                     setKey(HAS_DONE_SETUP_KEY, true)
-                    Log.d(TAG, "Repo Injected & Auto-Download Forced.")
+                    Log.d(TAG, "Repo Injected & Setup Bypassed")
                 } catch (e: Exception) {
                     Log.e(TAG, "Injection failed", e)
                 }
 
                 // =================================================================
-                // 2. DOWNLOAD PLUGIN SECARA PAKSA (Agar tidak perlu restart)
+                // 2. FORCE DOWNLOAD PLUGINS
+                // Menggunakan AutoDownloadMode.Always yang sudah di-import di Bagian 1
                 // =================================================================
-                // Kita panggil fungsi download INI DULUAN sebelum load lainnya
                 try {
                      PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
                         this@MainActivity,
-                        AutoDownloadMode.Always // Paksa mode Always
+                        AutoDownloadMode.Always // Kode ini sekarang akan dikenali
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Forced download failed", e)
@@ -1340,14 +1341,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                     mainPluginsLoadedEvent.invoke(false)
                 }
 
-                // Load ulang plugin online untuk memastikan (Update check)
+                // Update & Load Online Plugins
                 ioSafe {
                      PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(
                         this@MainActivity
                     )
                 }
 
-                // Load plugin lokal (yang barusan didownload)
+                // Load Local Plugins (untuk memastikan yang barusan didownload terload)
                 ioSafe {
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllLocalPlugins(
                         this@MainActivity,
