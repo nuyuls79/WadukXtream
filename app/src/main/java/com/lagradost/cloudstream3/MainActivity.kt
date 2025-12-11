@@ -1164,15 +1164,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         app.initClient(this)
 
         // --- MODIFIKASI 1: SET SETUP SELESAI (FIXED) ---
-        // Kita panggil DataStore secara spesifik agar tidak error 'Ambiguous'
-        com.lagradost.cloudstream3.utils.DataStore.setKey(HAS_DONE_SETUP_KEY, true)
+        // Menambahkan <Boolean> agar sistem tidak bingung tipe datanya
+        com.lagradost.cloudstream3.utils.DataStore.setKey<Boolean>(HAS_DONE_SETUP_KEY, true)
         // -----------------------------------------------
         
         // --- MODIFIKASI 2: MUAT REPOSITORY OTOMATIS ---
         ioSafe {
             val autoRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
             try {
-                // loadRepository sudah di-import dari AppContextUtils di Part 1, jadi aman
                 loadRepository(autoRepoUrl)
                 Log.d(TAG, "Auto-loaded repository: $autoRepoUrl")
             } catch (e: Exception) {
@@ -1357,16 +1356,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
                 ioSafe {
                     // --- MODIFIKASI 3: PAKSA DOWNLOAD SEMUA PLUGIN (FINAL FIX) ---
-                    // Kita panggil update agar daftar plugin online termuat
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(
                         this@MainActivity
                     )
                     
-                    // Kita panggil download paksa. 
-                    // AutoDownloadMode sudah tersedia di scope (digunakan di kode asli), jadi panggil langsung.
+                    // Gunakan alamat lengkap (Fully Qualified Name) untuk AutoDownloadMode
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
                         this@MainActivity,
-                        AutoDownloadMode.Always
+                        com.lagradost.cloudstream3.ui.settings.AutoDownloadMode.Always
                     )
                     // -----------------------------------------------------------
                 }
@@ -1766,58 +1763,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
 
-        val rail = binding?.navRailView
-        if (rail != null) {
-            binding?.navRailView?.labelVisibilityMode =
-                NavigationRailView.LABEL_VISIBILITY_UNLABELED
-            //val focus = mutableSetOf<Int>()
-
-            var prevId: Int? = null
-            var prevView: View? = null
-
-            // The genius engineers at google did not actually 
-            // write a nextFocus for the navrail
-            rail.findViewById<View?>(R.id.navigation_settings)?.nextFocusDownId =
-                R.id.nav_footer_profile_card
-            for (id in arrayOf(
-                R.id.navigation_home,
-                R.id.navigation_search,
-                R.id.navigation_library,
-                R.id.navigation_downloads,
-                R.id.navigation_settings
-            )) {
-                val view = rail.findViewById<View?>(id) ?: continue
-                prevId?.let { view.nextFocusUpId = it }
-                prevView?.nextFocusDownId = id
-
-                prevView = view
-                prevId = id
-                // Uncomment for focus expand
-                /*if (!isLayout(TV)) {
-                    view.onFocusChangeListener = null
-                } else {
-                    view.onFocusChangeListener =
-                        View.OnFocusChangeListener { v, hasFocus ->
-                            if (hasFocus) {
-                                focus += id
-                                binding?.navRailView?.labelVisibilityMode =
-                                    NavigationRailView.LABEL_VISIBILITY_LABELED
-                                binding?.navRailView?.expand()
-                            } else {
-                                focus -= id
-                                v.post {
-                                    if (focus.isEmpty()) {
-                                        binding?.navRailView?.labelVisibilityMode =
-                                            NavigationRailView.LABEL_VISIBILITY_UNLABELED
-                                        binding?.navRailView?.collapse()
-                                    }
-                                }
-                            }
-                        }
-                }*/
-            }
-        }
-
         // Navigation button long click functionality to scroll to top
         for (view in listOf(binding?.navView, binding?.navRailView)) {
             view?.findViewById<View?>(R.id.navigation_home)?.setOnLongClickListener {
@@ -1995,10 +1940,27 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
 
-        // --- HAPUS NAVIGASI SETUP (FIXED) ---
-        // Kode asli yang mengecek HAS_DONE_SETUP_KEY dihapus
-        // karena kita sudah memanggil setKey(HAS_DONE_SETUP_KEY, true) di atas.
-        // ------------------------------------
+        try {
+            // Kita sudah set HAS_DONE_SETUP_KEY = true di atas,
+            // jadi blok if pertama ini akan dilewati (tidak masuk setup language)
+            if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
+                navController.navigate(R.id.navigation_setup_language)
+                // If no plugins bring up extensions screen
+            } else if (PluginManager.getPluginsOnline().isEmpty()
+                && PluginManager.getPluginsLocal().isEmpty()
+//                && PREBUILT_REPOSITORIES.isNotEmpty()
+            ) {
+                // Kita biarkan navigasi ke ekstensi jika plugin kosong, 
+                // tapi karena kita sudah paksa download di atas, seharusnya ini juga terlewati
+                // atau user melihat proses download
+                 navController.navigate(
+                    R.id.navigation_setup_extensions,
+                    SetupFragmentExtensions.newInstance(false)
+                )
+            }
+        } catch (e: Exception) {
+            logError(e)
+        }
 
 //        Used to check current focus for TV
 //        main {
