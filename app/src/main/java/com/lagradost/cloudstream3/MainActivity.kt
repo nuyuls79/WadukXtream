@@ -197,8 +197,6 @@ import android.content.ContentUris
 
 import com.lagradost.cloudstream3.ui.home.HomeFragment
 import com.lagradost.cloudstream3.utils.TvChannelUtils
-// IMPORT PENTING YANG SEBELUMNYA KURANG:
-import com.lagradost.cloudstream3.ui.settings.AutoDownloadMode
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
     companion object {
@@ -586,6 +584,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
+
     //private var mCastSession: CastSession? = null
     var mSessionManager: SessionManager? = null
     private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
@@ -790,8 +789,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             false
         }
     }
-
-
     private val pluginsLock = Mutex()
     private fun onAllPluginsLoaded(success: Boolean = false) {
         ioSafe {
@@ -1160,28 +1157,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
+
     @Suppress("DEPRECATION_ERROR")
     override fun onCreate(savedInstanceState: Bundle?) {
         app.initClient(this)
-
-        // --- MODIFIKASI 1: LEWATI SETUP (FIXED) ---
-        // Kita gunakan <Boolean> secara eksplisit agar tidak error "Cannot infer type"
-        // Ini membuat aplikasi menganggap setup awal sudah selesai.
-        com.lagradost.cloudstream3.utils.DataStore.setKey<Boolean>(HAS_DONE_SETUP_KEY, true)
-        // ------------------------------------------
-        
-        // --- MODIFIKASI 2: MUAT REPOSITORY OTOMATIS ---
-        ioSafe {
-            val autoRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
-            try {
-                loadRepository(autoRepoUrl)
-                Log.d(TAG, "Auto-loaded repository: $autoRepoUrl")
-            } catch (e: Exception) {
-                logError(e)
-            }
-        }
-        // -------------------------------------------
-
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
         val errorFile = filesDir.resolve("last_error")
@@ -1215,7 +1194,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         updateTv()
 
-        // backup when we update the app, I don't trust myself to not boot lock users
+        // backup when we update the app, I don't trust myself to not boot lock users, might want to make this a setting?
         safe {
             val appVer = BuildConfig.VERSION_NAME
             val lastAppAutoBackup: String = getKey("VERSION_NAME") ?: ""
@@ -1283,7 +1262,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             showToast(txt(R.string.unable_to_inflate, t.message ?: ""), Toast.LENGTH_LONG)
             null
         }
-
         binding?.apply {
             fixSystemBarsPadding(
                 navView,
@@ -1299,6 +1277,19 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 padTop = false
             )
         }
+
+        // --- KODE TAMBAHAN: AUTO LOAD REPOSITORY ---
+        // Ini akan memuat repository secara otomatis saat aplikasi dibuka
+        ioSafe {
+            try {
+                val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
+                loadRepository(customRepoUrl)
+                Log.i(TAG, "Auto-loaded custom repository: $customRepoUrl")
+            } catch (e: Exception) {
+                logError(e)
+            }
+        }
+        // -------------------------------------------
 
         // overscan
         val padding = settingsManager.getInt(getString(R.string.overscan_key), 0).toPx
@@ -1357,20 +1348,31 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 }
 
                 ioSafe {
-                    // --- MODIFIKASI 3: PAKSA DOWNLOAD SEMUA PLUGIN (FINAL) ---
-                    
-                    // 1. Update daftar plugin online
-                    PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(
-                        this@MainActivity
-                    )
-                    
-                    // 2. Download paksa semua plugin yang belum ada.
-                    // Menggunakan alamat lengkap untuk AutoDownloadMode.Always agar 100% aman dari error import
-                    PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
-                        this@MainActivity,
-                        com.lagradost.cloudstream3.ui.settings.AutoDownloadMode.Always
-                    )
-                    // -----------------------------------------------------------
+                    if (settingsManager.getBoolean(
+                            getString(R.string.auto_update_plugins_key),
+                            true
+                        )
+                    ) {
+                        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(
+                            this@MainActivity
+                        )
+                    } else {
+                        ___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(this@MainActivity)
+                    }
+
+                    //Automatically download not existing plugins, using mode specified.
+                    val autoDownloadPlugin = AutoDownloadMode.getEnum(
+                        settingsManager.getInt(
+                            getString(R.string.auto_download_plugins_key),
+                            0
+                        )
+                    ) ?: AutoDownloadMode.Disable
+                    if (autoDownloadPlugin != AutoDownloadMode.Disable) {
+                        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
+                            this@MainActivity,
+                            autoDownloadPlugin
+                        )
+                    }
                 }
 
                 ioSafe {
@@ -1379,6 +1381,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                         false
                     )
                 }
+
+// Add your channel creation here
+
             }
         } else {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
@@ -1765,6 +1770,58 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
 
+        val rail = binding?.navRailView
+        if (rail != null) {
+            binding?.navRailView?.labelVisibilityMode =
+                NavigationRailView.LABEL_VISIBILITY_UNLABELED
+            //val focus = mutableSetOf<Int>()
+
+            var prevId: Int? = null
+            var prevView: View? = null
+
+            // The genius engineers at google did not actually 
+            // write a nextFocus for the navrail
+            rail.findViewById<View?>(R.id.navigation_settings)?.nextFocusDownId =
+                R.id.nav_footer_profile_card
+            for (id in arrayOf(
+                R.id.navigation_home,
+                R.id.navigation_search,
+                R.id.navigation_library,
+                R.id.navigation_downloads,
+                R.id.navigation_settings
+            )) {
+                val view = rail.findViewById<View?>(id) ?: continue
+                prevId?.let { view.nextFocusUpId = it }
+                prevView?.nextFocusDownId = id
+
+                prevView = view
+                prevId = id
+                // Uncomment for focus expand
+                /*if (!isLayout(TV)) {
+                    view.onFocusChangeListener = null
+                } else {
+                    view.onFocusChangeListener =
+                        View.OnFocusChangeListener { v, hasFocus ->
+                            if (hasFocus) {
+                                focus += id
+                                binding?.navRailView?.labelVisibilityMode =
+                                    NavigationRailView.LABEL_VISIBILITY_LABELED
+                                binding?.navRailView?.expand()
+                            } else {
+                                focus -= id
+                                v.post {
+                                    if (focus.isEmpty()) {
+                                        binding?.navRailView?.labelVisibilityMode =
+                                            NavigationRailView.LABEL_VISIBILITY_UNLABELED
+                                        binding?.navRailView?.collapse()
+                                    }
+                                }
+                            }
+                        }
+                }*/
+            }
+        }
+
         // Navigation button long click functionality to scroll to top
         for (view in listOf(binding?.navView, binding?.navRailView)) {
             view?.findViewById<View?>(R.id.navigation_home)?.setOnLongClickListener {
@@ -1883,6 +1940,19 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                // .setMetadata(movieMetadata).build()
                 .build()
             return MediaQueueItem.Builder(mediaInfo).build()
+        }*/
+        /*
+        castContext.addCastStateListener { state ->
+            if (state == CastState.CONNECTED) {
+                println("TESTING")
+                val isCasting = castContext?.sessionManager?.currentCastSession?.remoteMediaClient?.currentItem != null
+                if(!isCasting) {
+                    val castPlayer = CastPlayer(castContext)
+                    println("LOAD ITEM")
+
+                    castPlayer.loadItem(buildMediaQueueItem("https://cdn.discordapp.com/attachments/551382684560261121/730169809408622702/ChromecastLogo6.png"),0)
+                }
+            }
         }*/
         /*thread {
             createISO()
