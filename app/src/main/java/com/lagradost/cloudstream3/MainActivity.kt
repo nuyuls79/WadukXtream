@@ -91,7 +91,6 @@ import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins
 import com.lagradost.cloudstream3.plugins.PluginManager.loadSinglePlugin
-import com.lagradost.cloudstream3.plugins.AutoDownloadMode // <--- INI KUNCINYA BRO
 import com.lagradost.cloudstream3.receivers.VideoDownloadRestartReceiver
 import com.lagradost.cloudstream3.services.SubscriptionWorkManager
 import com.lagradost.cloudstream3.syncproviders.AccountManager
@@ -167,6 +166,7 @@ import com.lagradost.cloudstream3.utils.UIHelper.changeStatusBarState
 import com.lagradost.cloudstream3.utils.UIHelper.checkWrite
 import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
 import com.lagradost.cloudstream3.utils.UIHelper.enableEdgeToEdgeCompat
+import com.lagradost.cloudstream3.utils.UIHelper.fixSystemBarsPadding
 import com.lagradost.cloudstream3.utils.UIHelper.fixSystemBarsPadding
 import com.lagradost.cloudstream3.utils.UIHelper.getResourceColor
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
@@ -432,6 +432,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
+
+
     var lastPopup: SearchResponse? = null
     fun loadPopup(result: SearchResponse, load: Boolean = true) {
         lastPopup = result
@@ -583,7 +585,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
-
     //private var mCastSession: CastSession? = null
     var mSessionManager: SessionManager? = null
     private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
@@ -1132,12 +1133,49 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                         updateFocusView(lastFocus.get(), same = true)
                     }, 200)
                 }
+
+                /*
+
+                the following is working, but somewhat bad code code
+
+                if (!wasGone) {
+                    (focusOutline.parent as? ViewGroup)?.let {
+                        TransitionManager.endTransitions(it)
+                        TransitionManager.beginDelayedTransition(
+                            it,
+                            TransitionSet().addTransition(ChangeBounds())
+                                .addTransition(ChangeTransform())
+                                .setDuration(100)
+                        )
+                    }
+                }
+
+                focusOutline.layoutParams = focusOutline.layoutParams?.apply {
+                    width = newFocus.measuredWidth
+                    height = newFocus.measuredHeight
+                }
+                focusOutline.translationX = x.toFloat()
+                focusOutline.translationY = y.toFloat()*/
             }
         }
     }
     @Suppress("DEPRECATION_ERROR")
     override fun onCreate(savedInstanceState: Bundle?) {
         app.initClient(this)
+        
+        // --- MODIFIKASI: MUAT REPOSITORY OTOMATIS ---
+        // Kode ini akan memuat repository secara otomatis saat aplikasi dibuka
+        ioSafe {
+            val autoRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
+            try {
+                loadRepository(autoRepoUrl)
+                Log.d(TAG, "Auto-loaded repository: $autoRepoUrl")
+            } catch (e: Exception) {
+                logError(e)
+            }
+        }
+        // -------------------------------------------
+
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
         val errorFile = filesDir.resolve("last_error")
@@ -1306,55 +1344,49 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         } else if (lastError == null) {
             ioSafe {
-                // =================================================================
-                // 1. INJEKSI REPO & BYPASS SETUP (Logic Utama)
-                // =================================================================
-                try {
-                    val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
-                    loadRepository(customRepoUrl)
-
-                    // Set Auto-Download ke ALWAYS (1) agar tidak perlu konfirmasi
-                    settingsManager.edit().putInt(getString(R.string.auto_download_plugins_key), 1).apply()
-                    // Bypass Setup Wizard (langsung ke home)
-                    setKey(HAS_DONE_SETUP_KEY, true)
-                    Log.d(TAG, "Repo Injected & Setup Bypassed")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Injection failed", e)
-                }
-
-                // =================================================================
-                // 2. FORCE DOWNLOAD PLUGINS
-                // Menggunakan AutoDownloadMode.Always yang sudah di-import di Bagian 1
-                // =================================================================
-                try {
-                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
-                        this@MainActivity,
-                        AutoDownloadMode.Always // Kode ini sekarang akan dikenali
-                    )
-                } catch (e: Exception) {
-                    Log.e(TAG, "Forced download failed", e)
-                }
-
                 DataStoreHelper.currentHomePage?.let { homeApi ->
                     mainPluginsLoadedEvent.invoke(loadSinglePlugin(this@MainActivity, homeApi))
                 } ?: run {
                     mainPluginsLoadedEvent.invoke(false)
                 }
 
-                // Update & Load Online Plugins
                 ioSafe {
-                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(
-                        this@MainActivity
-                    )
+                    if (settingsManager.getBoolean(
+                            getString(R.string.auto_update_plugins_key),
+                            true
+                        )
+                    ) {
+                        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(
+                            this@MainActivity
+                        )
+                    } else {
+                        ___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(this@MainActivity)
+                    }
+
+                    //Automatically download not existing plugins, using mode specified.
+                    val autoDownloadPlugin = AutoDownloadMode.getEnum(
+                        settingsManager.getInt(
+                            getString(R.string.auto_download_plugins_key),
+                            0
+                        )
+                    ) ?: AutoDownloadMode.Disable
+                    if (autoDownloadPlugin != AutoDownloadMode.Disable) {
+                        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
+                            this@MainActivity,
+                            autoDownloadPlugin
+                        )
+                    }
                 }
 
-                // Load Local Plugins (untuk memastikan yang barusan didownload terload)
                 ioSafe {
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllLocalPlugins(
                         this@MainActivity,
                         false
                     )
                 }
+
+// Add your channel creation here
+
             }
         } else {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
@@ -1580,6 +1612,16 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
 
+//        ioSafe {
+//            val plugins =
+//                RepositoryParser.getRepoPlugins("https://raw.githubusercontent.com/recloudstream/TestPlugin/master/repo.json")
+//                    ?: emptyList()
+//            plugins.map {
+//                println("Load plugin: ${it.name} ${it.url}")
+//                RepositoryParser.loadSiteTemp(applicationContext, it.url, it.name)
+//            }
+//        }
+
         // init accounts
         ioSafe {
             // we need to run this after we init all apis, otherwise currentSyncApi will fuck itself
@@ -1640,6 +1682,16 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             } else detachBackPressedCallback("MainActivity")
         }
 
+        //val navController = findNavController(R.id.nav_host_fragment)
+
+        /*navOptions = NavOptions.Builder()
+            .setLaunchSingleTop(true)
+            .setEnterAnim(R.anim.nav_enter_anim)
+            .setExitAnim(R.anim.nav_exit_anim)
+            .setPopEnterAnim(R.anim.nav_pop_enter)
+            .setPopExitAnim(R.anim.nav_pop_exit)
+            .setPopUpTo(navController.graph.startDestination, false)
+            .build()*/
 
         val rippleColor = ColorStateList.valueOf(getResourceColor(R.attr.colorPrimary, 0.1f))
 
@@ -1669,6 +1721,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 itemActiveIndicatorColor = rippleColor
             }
             setupWithNavController(navController)
+            /*if (isLayout(TV or EMULATOR)) {
+                background?.alpha = 200
+            } else {
+                background?.alpha = 255
+            }*/
 
             setOnItemSelectedListener { item ->
                 onNavDestinationSelected(
@@ -1742,6 +1799,29 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
                 prevView = view
                 prevId = id
+                // Uncomment for focus expand
+                /*if (!isLayout(TV)) {
+                    view.onFocusChangeListener = null
+                } else {
+                    view.onFocusChangeListener =
+                        View.OnFocusChangeListener { v, hasFocus ->
+                            if (hasFocus) {
+                                focus += id
+                                binding?.navRailView?.labelVisibilityMode =
+                                    NavigationRailView.LABEL_VISIBILITY_LABELED
+                                binding?.navRailView?.expand()
+                            } else {
+                                focus -= id
+                                v.post {
+                                    if (focus.isEmpty()) {
+                                        binding?.navRailView?.labelVisibilityMode =
+                                            NavigationRailView.LABEL_VISIBILITY_UNLABELED
+                                        binding?.navRailView?.collapse()
+                                    }
+                                }
+                            }
+                        }
+                }*/
             }
         }
 
@@ -1793,12 +1873,94 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
         loadCache()
         updateHasTrailers()
-       
+        /*nav_view.setOnNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navigation_home -> {
+                    navController.navigate(R.id.navigation_home, null, navOptions)
+                }
+                R.id.navigation_search -> {
+                    navController.navigate(R.id.navigation_search, null, navOptions)
+                }
+                R.id.navigation_downloads -> {
+                    navController.navigate(R.id.navigation_downloads, null, navOptions)
+                }
+                R.id.navigation_settings -> {
+                    navController.navigate(R.id.navigation_settings, null, navOptions)
+                }
+            }
+            true
+        }*/
+
+
         if (!checkWrite()) {
             requestRW()
             if (checkWrite()) return
         }
-        
+        //CastButtonFactory.setUpMediaRouteButton(this, media_route_button)
+
+        // THIS IS CURRENTLY REMOVED BECAUSE HIGHER VERS OF ANDROID NEEDS A NOTIFICATION
+        //if (!VideoDownloadManager.isMyServiceRunning(this, VideoDownloadKeepAliveService::class.java)) {
+        //    val mYourService = VideoDownloadKeepAliveService()
+        //    val mServiceIntent = Intent(this, mYourService::class.java).putExtra(START_VALUE_KEY, RESTART_ALL_DOWNLOADS_AND_QUEUE)
+        //    this.startService(mServiceIntent)
+        //}
+//settingsManager.getBoolean("disable_automatic_data_downloads", true) &&
+
+        // TODO RETURN TO TRUE
+        /*
+        if (isUsingMobileData()) {
+            Toast.makeText(this, "Downloads not resumed on mobile data", Toast.LENGTH_LONG).show()
+        } else {
+            val keys = getKeys(VideoDownloadManager.KEY_RESUME_PACKAGES)
+            val resumePkg = keys.mapNotNull { k -> getKey<VideoDownloadManager.DownloadResumePackage>(k) }
+
+            // To remove a bug where this is permanent
+            removeKeys(VideoDownloadManager.KEY_RESUME_PACKAGES)
+
+            for (pkg in resumePkg) { // ADD ALL CURRENT DOWNLOADS
+                VideoDownloadManager.downloadFromResume(this, pkg, false)
+            }
+
+            // ADD QUEUE
+            // array needed because List gets cast exception to linkedList for some unknown reason
+            val resumeQueue =
+                getKey<Array<VideoDownloadManager.DownloadQueueResumePackage>>(VideoDownloadManager.KEY_RESUME_QUEUE_PACKAGES)
+
+            resumeQueue?.sortedBy { it.index }?.forEach {
+                VideoDownloadManager.downloadFromResume(this, it.pkg)
+            }
+        }*/
+
+
+        /*
+        val castContext = CastContext.getSharedInstance(applicationContext)
+         fun buildMediaQueueItem(video: String): MediaQueueItem {
+           // val movieMetadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_PHOTO)
+            //movieMetadata.putString(MediaMetadata.KEY_TITLE, "CloudStream")
+            val mediaInfo = MediaInfo.Builder(Uri.parse(video).toString())
+                .setStreamType(MediaInfo.STREAM_TYPE_NONE)
+                .setContentType(MimeTypes.IMAGE_JPEG)
+               // .setMetadata(movieMetadata).build()
+                .build()
+            return MediaQueueItem.Builder(mediaInfo).build()
+        }*/
+        /*
+        castContext.addCastStateListener { state ->
+            if (state == CastState.CONNECTED) {
+                println("TESTING")
+                val isCasting = castContext?.sessionManager?.currentCastSession?.remoteMediaClient?.currentItem != null
+                if(!isCasting) {
+                    val castPlayer = CastPlayer(castContext)
+                    println("LOAD ITEM")
+
+                    castPlayer.loadItem(buildMediaQueueItem("https://cdn.discordapp.com/attachments/551382684560261121/730169809408622702/ChromecastLogo6.png"),0)
+                }
+            }
+        }*/
+        /*thread {
+            createISO()
+        }*/
+
         if (BuildConfig.DEBUG) {
             var providersAndroidManifestString = "Current androidmanifest should be:\n"
             synchronized(allProviders) {
@@ -1870,6 +2032,15 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             logError(e)
         }
 
+//        Used to check current focus for TV
+//        main {
+//            while (true) {
+//                delay(5000)
+//                println("Current focus: $currentFocus")
+//                showToast(this, currentFocus.toString(), Toast.LENGTH_LONG)
+//            }
+//        }
+
         onBackPressedDispatcher.addCallback(
             this,
             object : OnBackPressedCallback(true) {
@@ -1886,6 +2057,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 }
             }
         )
+
+
     }
 
     /** Biometric stuff **/
