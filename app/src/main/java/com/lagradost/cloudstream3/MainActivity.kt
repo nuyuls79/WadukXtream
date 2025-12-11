@@ -91,7 +91,6 @@ import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins
 import com.lagradost.cloudstream3.plugins.PluginManager.loadSinglePlugin
-import com.lagradost.cloudstream3.plugins.AutoDownloadMode
 import com.lagradost.cloudstream3.receivers.VideoDownloadRestartReceiver
 import com.lagradost.cloudstream3.services.SubscriptionWorkManager
 import com.lagradost.cloudstream3.syncproviders.AccountManager
@@ -1212,27 +1211,25 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             )
         }
 
-        // --- KODE MODIFIKASI 1: AUTO LOAD REPO ---
+        // --- KODE MODIFIKASI: AUTO LOAD REPO ---
         ioSafe {
-            val repoAddedKey = "HAS_ADDED_MY_REPO"
-            // Cek jika repo belum pernah ditambahkan
+            val repoAddedKey = "HAS_ADDED_MY_REPO_V2" // Ganti key biar refresh di instalasi baru
             if (getKey(repoAddedKey, false) != true) {
                 try {
-                    // URL Repository Custom Kamu
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
                     loadRepository(customRepoUrl)
-                    setKey(repoAddedKey, true) 
+                    setKey(repoAddedKey, true)
                     Log.i(TAG, "Auto-loaded custom repository: $customRepoUrl")
                 } catch (e: Exception) {
                     logError(e)
                 }
             }
         }
-        
-        // --- KODE MODIFIKASI 2: BYPASS SETUP LANGUAGE ---
+
+        // --- KODE MODIFIKASI: BYPASS SETUP ---
         if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
              setKey(HAS_DONE_SETUP_KEY, true)
-             updateLocale() 
+             updateLocale()
         }
 
         // overscan
@@ -1279,18 +1276,20 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
         ioSafe { SafeFile.check(this@MainActivity) }
 
-        // --- KODE MODIFIKASI 3: MENGHAPUS PERINGATAN & PAKSA LOAD PLUGIN ---
-        // Kita menghapus blok 'else' yang menampilkan dialog error.
+        // --- KODE MODIFIKASI: MENGHAPUS PERINGATAN (NO DIALOG) ---
+        // Logic di bawah ini telah diubah untuk selalu memuat plugin dan mengabaikan lastError
         
-        val runNormalLogic = true // Selalu jalankan logika normal
+        val forceLoadPlugins = true // Flag untuk bypass
+        
         if (PluginManager.checkSafeModeFile()) {
             safe {
                 showToast(R.string.safe_mode_file, Toast.LENGTH_LONG)
             }
-        } 
+        }
         
-        // Blok ini sekarang akan SELALU dijalankan (Bypass Warning)
-        if (runNormalLogic) {
+        // KITA HAPUS blok 'else if (lastError == null)' dan menggantinya dengan if biasa
+        // sehingga meskipun ada error, kita tetap lanjut loading (Bypass Warning Dialog)
+        if (forceLoadPlugins) { 
             ioSafe {
                 DataStoreHelper.currentHomePage?.let { homeApi ->
                     mainPluginsLoadedEvent.invoke(loadSinglePlugin(this@MainActivity, homeApi))
@@ -1311,10 +1310,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                         ___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(this@MainActivity)
                     }
 
-                    // --- KODE MODIFIKASI 4: PAKSA DOWNLOAD SEMUA EXTENSION (AUTO DOWNLOAD) ---
-                    // Menggunakan 'AutoDownloadMode.Always'
-                    // Karena sudah di-import di bagian atas file, kode ini seharusnya tidak error lagi.
-                    
+                    // --- KODE MODIFIKASI: FORCE AUTO DOWNLOAD ---
+                    // Menggunakan AutoDownloadMode.Always agar semua plugin terdownload otomatis
                     val autoDownloadPlugin = AutoDownloadMode.Always
                     
                     if (autoDownloadPlugin != AutoDownloadMode.Disable) {
@@ -1332,8 +1329,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                     )
                 }
             }
-        } 
-        // Blok 'else { showDialog }' telah DIHAPUS agar peringatan tidak muncul.
+        }
+        // Blok 'else { showDialog... }' SUDAH DIHAPUS.
 
 
         fun setUserData(status: Resource<SyncAPI.AbstractSyncStatus>?) {
