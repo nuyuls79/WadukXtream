@@ -197,7 +197,7 @@ import android.content.ContentUris
 
 import com.lagradost.cloudstream3.ui.home.HomeFragment
 import com.lagradost.cloudstream3.utils.TvChannelUtils
-// Import penting untuk auto install plugin
+// Import wajib untuk fitur auto install
 import com.lagradost.cloudstream3.ui.settings.AutoDownloadMode
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
@@ -1255,40 +1255,49 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             )
         }
 
-        // --- KODE MODIFIKASI: AUTO REPO & AUTO INSTALL ---
+        // =================================================================
+        // --- MODIFIKASI: AUTO ADD REPO & AUTO INSTALL PLUGINS ---
+        // =================================================================
         
         ioSafe {
-            val repoAddedKey = "HAS_ADDED_MY_REPO"
+            // Kunci untuk memastikan ini hanya berjalan sekali (agar tidak berat saat buka app berikutnya)
+            val repoAddedKey = "HAS_AUTO_INSTALLED_PLUGINS_V3" 
+            
+            // Ganti URL ini dengan URL Repo JSON kamu yang valid
+            // Berdasarkan data kamu, raw github biasanya formatnya seperti ini:
             val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
             
-            // Cek apakah ini pertama kali atau kita ingin memaksa cek ulang
             if (getKey(repoAddedKey, false) != true) {
                 try {
+                    Log.i(TAG, "Starting Auto-Install Plugins Sequence...")
+
                     // 1. Load Repository
                     loadRepository(customRepoUrl)
-                    Log.i(TAG, "Auto-loaded custom repository: $customRepoUrl")
+                    Log.i(TAG, "Repo Loaded: $customRepoUrl")
 
-                    // 2. PAKSA Settingan "Auto Download Plugins" menjadi ON (1 = Always)
-                    // Kita akses SharedPreferences langsung agar settingan berubah
-                    settingsManager.edit().putInt(getString(R.string.auto_download_plugins_key), 1).apply()
+                    // 2. FORCE ENABLE 'Auto Download Plugins' di Settings
+                    // Kita set nilainya jadi 1 (Always)
+                    settingsManager.edit().putInt(getString(R.string.auto_download_plugins_key), 1).commit()
 
-                    // 3. TRIGGER INSTALL OTOMATIS
-                    // Fungsi ini akan mengecek plugin apa yang ada di repo tapi belum terinstal, lalu mendownloadnya
+                    // 3. TRIGGER DOWNLOAD & INSTALL
+                    // Memerintahkan PluginManager untuk membandingkan plugin di repo vs di HP,
+                    // lalu mendownload semua yang belum ada.
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
                         this@MainActivity,
                         AutoDownloadMode.Always
                     )
+                    Log.i(TAG, "Triggered Auto-Download for missing plugins.")
 
-                    // 4. Tandai selesai
+                    // 4. Tandai selesai agar tidak mengulang
                     setKey(repoAddedKey, true) 
                     
                 } catch (e: Exception) {
                     logError(e)
+                    Log.e(TAG, "Failed to auto install plugins: ${e.message}")
                 }
             }
         }
-        
-        // -------------------------------------------------
+        // =================================================================
 
         // overscan
         val padding = settingsManager.getInt(getString(R.string.overscan_key), 0).toPx
@@ -1769,58 +1778,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
 
-        val rail = binding?.navRailView
-        if (rail != null) {
-            binding?.navRailView?.labelVisibilityMode =
-                NavigationRailView.LABEL_VISIBILITY_UNLABELED
-            //val focus = mutableSetOf<Int>()
-
-            var prevId: Int? = null
-            var prevView: View? = null
-
-            // The genius engineers at google did not actually 
-            // write a nextFocus for the navrail
-            rail.findViewById<View?>(R.id.navigation_settings)?.nextFocusDownId =
-                R.id.nav_footer_profile_card
-            for (id in arrayOf(
-                R.id.navigation_home,
-                R.id.navigation_search,
-                R.id.navigation_library,
-                R.id.navigation_downloads,
-                R.id.navigation_settings
-            )) {
-                val view = rail.findViewById<View?>(id) ?: continue
-                prevId?.let { view.nextFocusUpId = it }
-                prevView?.nextFocusDownId = id
-
-                prevView = view
-                prevId = id
-                // Uncomment for focus expand
-                /*if (!isLayout(TV)) {
-                    view.onFocusChangeListener = null
-                } else {
-                    view.onFocusChangeListener =
-                        View.OnFocusChangeListener { v, hasFocus ->
-                            if (hasFocus) {
-                                focus += id
-                                binding?.navRailView?.labelVisibilityMode =
-                                    NavigationRailView.LABEL_VISIBILITY_LABELED
-                                binding?.navRailView?.expand()
-                            } else {
-                                focus -= id
-                                v.post {
-                                    if (focus.isEmpty()) {
-                                        binding?.navRailView?.labelVisibilityMode =
-                                            NavigationRailView.LABEL_VISIBILITY_UNLABELED
-                                        binding?.navRailView?.collapse()
-                                    }
-                                }
-                            }
-                        }
-                }*/
-            }
-        }
-
         // Navigation button long click functionality to scroll to top
         for (view in listOf(binding?.navView, binding?.navRailView)) {
             view?.findViewById<View?>(R.id.navigation_home)?.setOnLongClickListener {
@@ -2011,25 +1968,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
 
-        // --- INI BAGIAN PENTING UNTUK BYPASS SETUP ---
-        // Jika kunci setup belum ada, kita buat TRUE dan JANGAN NAVIGASI KE SETUP LANGUAGE
+        // --- BYPASS SETUP & AUTO INSTALL ---
         try {
             if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
+                // Tandai setup selesai agar tidak masuk ke wizard setup
                 setKey(HAS_DONE_SETUP_KEY, true)
-                // Kita tidak memanggil navController.navigate(...)
-                // Jadi aplikasi akan tetap di HomeFragment
             } 
-            // Bagian ini biasanya mengarahkan ke setup extensions jika kosong, 
-            // tapi karena kita sudah load repo di atas, user akan baik-baik saja.
-            else if (PluginManager.getPluginsOnline().isEmpty()
-                && PluginManager.getPluginsLocal().isEmpty()
-            ) {
-                 // Opsional: Jika masih mau menampilkan halaman extensions jika kosong
-                 /* navController.navigate(
-                    R.id.navigation_setup_extensions,
-                    SetupFragmentExtensions.newInstance(false)
-                ) */
-            }
         } catch (e: Exception) {
             logError(e)
         }
