@@ -167,7 +167,6 @@ import com.lagradost.cloudstream3.utils.UIHelper.checkWrite
 import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
 import com.lagradost.cloudstream3.utils.UIHelper.enableEdgeToEdgeCompat
 import com.lagradost.cloudstream3.utils.UIHelper.fixSystemBarsPadding
-import com.lagradost.cloudstream3.utils.UIHelper.fixSystemBarsPadding
 import com.lagradost.cloudstream3.utils.UIHelper.getResourceColor
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 import com.lagradost.cloudstream3.utils.UIHelper.navigate
@@ -198,6 +197,8 @@ import android.content.ContentUris
 
 import com.lagradost.cloudstream3.ui.home.HomeFragment
 import com.lagradost.cloudstream3.utils.TvChannelUtils
+// IMPORT PENTING YANG SEBELUMNYA KURANG:
+import com.lagradost.cloudstream3.ui.settings.AutoDownloadMode
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
     companion object {
@@ -1163,10 +1164,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
     override fun onCreate(savedInstanceState: Bundle?) {
         app.initClient(this)
 
-        // --- MODIFIKASI 1: SET SETUP SELESAI (FIXED) ---
-        // Menambahkan <Boolean> agar sistem tidak bingung tipe datanya
+        // --- MODIFIKASI 1: LEWATI SETUP (FIXED) ---
+        // Kita gunakan <Boolean> secara eksplisit agar tidak error "Cannot infer type"
+        // Ini membuat aplikasi menganggap setup awal sudah selesai.
         com.lagradost.cloudstream3.utils.DataStore.setKey<Boolean>(HAS_DONE_SETUP_KEY, true)
-        // -----------------------------------------------
+        // ------------------------------------------
         
         // --- MODIFIKASI 2: MUAT REPOSITORY OTOMATIS ---
         ioSafe {
@@ -1213,7 +1215,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         updateTv()
 
-        // backup when we update the app, I don't trust myself to not boot lock users, might want to make this a setting?
+        // backup when we update the app, I don't trust myself to not boot lock users
         safe {
             val appVer = BuildConfig.VERSION_NAME
             val lastAppAutoBackup: String = getKey("VERSION_NAME") ?: ""
@@ -1355,12 +1357,15 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 }
 
                 ioSafe {
-                    // --- MODIFIKASI 3: PAKSA DOWNLOAD SEMUA PLUGIN (FINAL FIX) ---
+                    // --- MODIFIKASI 3: PAKSA DOWNLOAD SEMUA PLUGIN (FINAL) ---
+                    
+                    // 1. Update daftar plugin online
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(
                         this@MainActivity
                     )
                     
-                    // Gunakan alamat lengkap (Fully Qualified Name) untuk AutoDownloadMode
+                    // 2. Download paksa semua plugin yang belum ada.
+                    // Menggunakan alamat lengkap untuk AutoDownloadMode.Always agar 100% aman dari error import
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
                         this@MainActivity,
                         com.lagradost.cloudstream3.ui.settings.AutoDownloadMode.Always
@@ -1374,9 +1379,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                         false
                     )
                 }
-
-// Add your channel creation here
-
             }
         } else {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
@@ -1941,8 +1943,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         }
 
         try {
-            // Kita sudah set HAS_DONE_SETUP_KEY = true di atas,
-            // jadi blok if pertama ini akan dilewati (tidak masuk setup language)
             if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
                 navController.navigate(R.id.navigation_setup_language)
                 // If no plugins bring up extensions screen
@@ -1950,10 +1950,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 && PluginManager.getPluginsLocal().isEmpty()
 //                && PREBUILT_REPOSITORIES.isNotEmpty()
             ) {
-                // Kita biarkan navigasi ke ekstensi jika plugin kosong, 
-                // tapi karena kita sudah paksa download di atas, seharusnya ini juga terlewati
-                // atau user melihat proses download
-                 navController.navigate(
+                navController.navigate(
                     R.id.navigation_setup_extensions,
                     SetupFragmentExtensions.newInstance(false)
                 )
