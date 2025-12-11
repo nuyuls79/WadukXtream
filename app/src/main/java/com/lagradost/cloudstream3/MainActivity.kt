@@ -91,6 +91,7 @@ import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins
 import com.lagradost.cloudstream3.plugins.PluginManager.loadSinglePlugin
+import com.lagradost.cloudstream3.plugins.AutoDownloadMode
 import com.lagradost.cloudstream3.receivers.VideoDownloadRestartReceiver
 import com.lagradost.cloudstream3.services.SubscriptionWorkManager
 import com.lagradost.cloudstream3.syncproviders.AccountManager
@@ -1217,7 +1218,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             // Cek jika repo belum pernah ditambahkan
             if (getKey(repoAddedKey, false) != true) {
                 try {
-                    // Ganti URL ini sesuai dengan URL repository JSON kamu yang valid
+                    // URL Repository Custom Kamu
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
                     loadRepository(customRepoUrl)
                     setKey(repoAddedKey, true) 
@@ -1278,10 +1279,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
         ioSafe { SafeFile.check(this@MainActivity) }
 
-        // --- KODE MODIFIKASI 3: MENGHAPUS PERINGATAN (ERROR DIALOG) ---
-        // Kita menghapus blok 'else' yang menampilkan dialog error. 
-        // Logic 'if safe mode' tetap ada, tapi jika ada error (lastError != null), 
-        // kita tetap memaksanya masuk ke logic normal (blok kode di bawah ini).
+        // --- KODE MODIFIKASI 3: MENGHAPUS PERINGATAN & PAKSA LOAD PLUGIN ---
+        // Kita menghapus blok 'else' yang menampilkan dialog error.
         
         val runNormalLogic = true // Selalu jalankan logika normal
         if (PluginManager.checkSafeModeFile()) {
@@ -1313,12 +1312,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                     }
 
                     // --- KODE MODIFIKASI 4: PAKSA DOWNLOAD SEMUA EXTENSION (AUTO DOWNLOAD) ---
-                    // Alih-alih membaca setting pengguna, kita paksa Mode 'Always' (Selalu Download)
-                    // agar daftar Provider langsung muncul seperti di gambar 2.
+                    // Menggunakan 'AutoDownloadMode.Always'
+                    // Karena sudah di-import di bagian atas file, kode ini seharusnya tidak error lagi.
                     
-                    val autoDownloadPlugin = com.lagradost.cloudstream3.plugins.AutoDownloadMode.Always
+                    val autoDownloadPlugin = AutoDownloadMode.Always
                     
-                    if (autoDownloadPlugin != com.lagradost.cloudstream3.plugins.AutoDownloadMode.Disable) {
+                    if (autoDownloadPlugin != AutoDownloadMode.Disable) {
                         PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(
                             this@MainActivity,
                             autoDownloadPlugin
