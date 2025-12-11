@@ -31,7 +31,7 @@ import com.lagradost.cloudstream3.ui.settings.Globals.isLayout
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setSystemBarsPadding
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
-import com.lagradost.cloudstream3.utils.AppContextUtils.addRepositoryDialog
+// import com.lagradost.cloudstream3.utils.AppContextUtils.addRepositoryDialog // Baris ini tidak lagi digunakan
 import com.lagradost.cloudstream3.utils.AppContextUtils.setDefaultFocus
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
@@ -237,10 +237,19 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                         if (plugins.isNullOrEmpty()) {
                             showToast(R.string.no_plugins_found_error, Toast.LENGTH_LONG)
                         } else {
-                            this@ExtensionsFragment.activity?.addRepositoryDialog(
-                                fixedName,
-                                url,
-                            )
+                            // --- MODIFIKASI: BYPASS WARNING DIALOG ---
+                            // Kode lama (addRepositoryDialog) dihapus dan diganti dengan navigasi langsung
+                            main {
+                                this@ExtensionsFragment.findNavController().navigate(
+                                    R.id.navigation_settings_extensions_to_navigation_settings_plugins,
+                                    PluginsFragment.newInstance(
+                                        fixedName,
+                                        url,
+                                        false
+                                    )
+                                )
+                            }
+                            // -----------------------------------------
                         }
                     }
                 }
