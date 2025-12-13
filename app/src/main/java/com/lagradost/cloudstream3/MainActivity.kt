@@ -378,8 +378,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             } catch (_: Throwable) {
             }
         }
-    }
-    var lastPopup: SearchResponse? = null
+    }var lastPopup: SearchResponse? = null
     fun loadPopup(result: SearchResponse, load: Boolean = true) {
         lastPopup = result
         val syncName = syncViewModel.syncName(result.apiName)
@@ -529,8 +528,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         } catch (e: Exception) {
             logError(e)
         }
-    }
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean =
+    }override fun dispatchKeyEvent(event: KeyEvent): Boolean =
         CommonActivity.dispatchKeyEvent(this, event) ?: super.dispatchKeyEvent(event)
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean =
@@ -690,8 +688,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         viewModel = ViewModelProvider(this)[ResultViewModel2::class.java]
         syncViewModel = ViewModelProvider(this)[SyncViewModel::class.java]
         return super.onCreateView(name, context, attrs)
-    }
-    private fun hidePreviewPopupDialog() {
+    }private fun hidePreviewPopupDialog() {
         bottomPreviewPopup.dismissSafe(this)
         bottomPreviewPopup = null
         bottomPreviewBinding = null
@@ -865,7 +862,72 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                     focusOutline.isVisible = false
                 }
                 if (!exactlyTheSame) {
-                    (newFocus.parent@Suppress("DEPRECATION_ERROR")
+                    (newFocus.parent as? RecyclerView)?.addOnLayoutChangeListener(layoutListener)
+                    newFocus.addOnLayoutChangeListener(layoutListener)
+                    newFocus.addOnAttachStateChangeListener(attachListener)
+                }
+
+                val start = FocusTarget(
+                    x = currentX,
+                    y = currentY,
+                    width = focusOutline.measuredWidth,
+                    height = focusOutline.measuredHeight
+                )
+                val end = FocusTarget(
+                    x = x,
+                    y = y,
+                    width = newFocus.measuredWidth,
+                    height = newFocus.measuredHeight
+                )
+
+                val deltaMinX = min(end.width / 2, 60.toPx)
+                val deltaMinY = min(end.height / 2, 60.toPx)
+                if (start.width == end.width &&
+                    start.height == end.height &&
+                    (start.x - end.x).absoluteValue < deltaMinX &&
+                    (start.y - end.y).absoluteValue < deltaMinY
+                ) {
+                    animator?.cancel()
+                    last = start
+                    current = end
+                    setTargetPosition(end)
+                    return
+                }
+
+                if (animator?.isRunning == true) {
+                    current = end
+                    return
+                } else {
+                    animator?.cancel()
+                }
+
+                last = start
+                current = end
+
+                if (wasGone) {
+                    setTargetPosition(current)
+                    return
+                }
+
+                animator = ValueAnimator.ofFloat(0.0f, 1.0f).apply {
+                    startDelay = 0
+                    duration = 200
+                    addUpdateListener { animation ->
+                        val animatedValue = animation.animatedValue as Float
+                        val target = FocusTarget.lerp(last, current, minOf(animatedValue, 1.0f))
+                        setTargetPosition(target)
+                    }
+                    start()
+                }
+
+                if (!same) {
+                    newFocus.postDelayed({
+                        updateFocusView(lastFocus.get(), same = true)
+                    }, 200)
+                }
+            }
+        }
+    }@Suppress("DEPRECATION_ERROR")
     override fun onCreate(savedInstanceState: Bundle?) {
         app.initClient(this)
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
