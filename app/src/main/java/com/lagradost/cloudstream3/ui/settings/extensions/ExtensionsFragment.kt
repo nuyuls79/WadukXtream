@@ -22,7 +22,7 @@ import com.lagradost.cloudstream3.databinding.AddRepoInputBinding
 import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
 import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
-import com.lagradost.cloudstream3.plugins.RepositoryData
+// import com.lagradost.cloudstream3.plugins.RepositoryData <-- INI DIHAPUS AGAR TIDAK BENTROK
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
@@ -226,6 +226,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
                         val fixedName = if (!name.isNullOrBlank()) name
                         else repository.name
+                        // Disini kita gunakan RepositoryData dari package yang sama (ExtensionsViewModel)
                         val newRepo = RepositoryData(repository.iconUrl, fixedName, url)
                         RepositoryManager.addRepository(newRepo)
                         extensionViewModel.loadStats()
@@ -236,7 +237,6 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                             showToast(R.string.no_plugins_found_error, Toast.LENGTH_LONG)
                         } else {
                             // --- ADIXTREAM MODIFIKASI: BYPASS DIALOG PERINGATAN ---
-                            // Kita langsung navigasi ke PluginsFragment seolah-olah user menekan "Buka Arsip"
                             main {
                                 this@ExtensionsFragment.findNavController().navigate(
                                     R.id.navigation_settings_extensions_to_navigation_settings_plugins,
