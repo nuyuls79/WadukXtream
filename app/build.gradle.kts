@@ -4,6 +4,7 @@ import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import java.util.Base64
 
 plugins {
     alias(libs.plugins.android.application)
@@ -18,20 +19,18 @@ val prereleaseStoreFile: File? = File(tmpFilePath).listFiles()?.first()
 fun getGitCommitHash(): String {
     return try {
         val headFile = file("${project.rootDir}/.git/HEAD")
-
-        // Read the commit hash from .git/HEAD
         if (headFile.exists()) {
             val headContent = headFile.readText().trim()
             if (headContent.startsWith("ref:")) {
-                val refPath = headContent.substring(5) // e.g., refs/heads/main
+                val refPath = headContent.substring(5)
                 val commitFile = file("${project.rootDir}/.git/$refPath")
                 if (commitFile.exists()) commitFile.readText().trim() else ""
-            } else headContent // If it's a detached HEAD (commit hash directly)
+            } else headContent
         } else {
-            "" // If .git/HEAD doesn't exist
-        }.take(7) // Return the short commit hash
+            ""
+        }.take(7)
     } catch (_: Throwable) {
-        "" // Just return an empty string if any exception occurs
+        ""
     }
 }
 
@@ -46,6 +45,24 @@ android {
     }
 
     signingConfigs {
+        // --- BAGIAN INI YANG DITAMBAHKAN UNTUK MEMBACA SECRET GITHUB ---
+        create("release") {
+            val encodedKey = System.getenv("SIGNING_KEY")
+            val keystoreFile = file("keystore.jks")
+            
+            if (encodedKey != null) {
+                // Decode teks Base64 dari Secret menjadi file Keystore asli
+                val decodedKey = Base64.getDecoder().decode(encodedKey)
+                keystoreFile.writeBytes(decodedKey)
+                
+                storeFile = keystoreFile
+                storePassword = System.getenv("KEY_STORE_PASSWORD")
+                keyAlias = System.getenv("ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+        // -------------------------------------------------------------
+
         if (prereleaseStoreFile != null) {
             create("prerelease") {
                 storeFile = file(prereleaseStoreFile)
@@ -59,7 +76,6 @@ android {
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        // PENTING: ID Aplikasi diubah disini agar menjadi aplikasi baru
         applicationId = "com.adixtream.app" 
         
         minSdk = libs.versions.minSdk.get().toInt()
@@ -69,57 +85,36 @@ android {
 
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
-        
-        // PENTING: Kode ini MEMAKSA nama aplikasi berubah jadi AdiXtream
         resValue("string", "app_name", "AdiXtream") 
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
-        // Reads local.properties
         val localProperties = gradleLocalProperties(rootDir, project.providers)
 
-        buildConfigField(
-            "long",
-            "BUILD_DATE",
-            "${System.currentTimeMillis()}"
-        )
-        buildConfigField(
-            "String",
-            "APP_VERSION",
-            "\"$versionName\""
-        )
-        buildConfigField(
-            "String",
-            "SIMKL_CLIENT_ID",
-            "\"" + (System.getenv("SIMKL_CLIENT_ID") ?: localProperties["simkl.id"]) + "\""
-        )
-        buildConfigField(
-            "String",
-            "SIMKL_CLIENT_SECRET",
-            "\"" + (System.getenv("SIMKL_CLIENT_SECRET") ?: localProperties["simkl.secret"]) + "\""
-        )
+        buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
+        buildConfigField("String", "APP_VERSION", "\"$versionName\"")
+        buildConfigField("String", "SIMKL_CLIENT_ID", "\"" + (System.getenv("SIMKL_CLIENT_ID") ?: localProperties["simkl.id"]) + "\"")
+        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"" + (System.getenv("SIMKL_CLIENT_SECRET") ?: localProperties["simkl.secret"]) + "\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
+            // Aktifkan Config yang baru kita buat
+            signingConfig = signingConfigs.getByName("release")
+            
             isDebuggable = false
-            isMinifyEnabled = false
-            isShrinkResources = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            isMinifyEnabled = true // Disarankan True untuk release
+            isShrinkResources = true // Disarankan True untuk release
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
             isDebuggable = true
             applicationIdSuffix = ".debug"
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+    
     flavorDimensions.add("state")
     productFlavors {
         create("stable") {
@@ -132,15 +127,9 @@ android {
             applicationIdSuffix = ".prerelease"
             if (signingConfigs.names.contains("prerelease")) {
                 signingConfig = signingConfigs.getByName("prerelease")
-            } else {
-                logger.warn("No prerelease signing config!")
             }
             versionNameSuffix = "-PRE"
-            buildConfigField(
-                "String",
-                "APP_VERSION",
-                "\"${defaultConfig.versionName}$versionNameSuffix\""
-            )
+            buildConfigField("String", "APP_VERSION", "\"${defaultConfig.versionName}$versionNameSuffix\"")
             versionCode = (System.currentTimeMillis() / 60000).toInt()
         }
     }
@@ -152,8 +141,6 @@ android {
     }
 
     java {
-        // Use Java 17 toolchain even if a higher JDK runs the build.
-        // We still use Java 8 for now which higher JDKs have deprecated.
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get()))
         }
@@ -170,12 +157,10 @@ android {
         resValues = true
     }
 
-    // Namespace jangan diubah agar file Java/Kotlin lain tidak error (R.id not found)
     namespace = "com.lagradost.cloudstream3"
 }
 
 dependencies {
-    // Testing
     testImplementation(libs.junit)
     testImplementation(libs.json)
     androidTestImplementation(libs.core)
@@ -183,7 +168,6 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    // Android Core & Lifecycle
     implementation(libs.core.ktx)
     implementation(libs.activity.ktx)
     implementation(libs.appcompat)
@@ -191,66 +175,53 @@ dependencies {
     implementation(libs.bundles.lifecycle)
     implementation(libs.bundles.navigation)
 
-    // Design & UI
     implementation(libs.preference.ktx)
     implementation(libs.material)
     implementation(libs.constraintlayout)
 
-    // Coil Image Loading
     implementation(libs.bundles.coil)
 
-    // Media 3 (ExoPlayer)
     implementation(libs.bundles.media3)
     implementation(libs.video)
 
-    // FFmpeg Decoding
     implementation(libs.bundles.nextlib)
 
-    // PlayBack
-    implementation(libs.colorpicker) // Subtitle Color Picker
-    implementation(libs.newpipeextractor) // For Trailers
-    implementation(libs.juniversalchardet) // Subtitle Decoding
-    // UI Stuff
-    implementation(libs.shimmer) // Shimmering Effect (Loading Skeleton)
-    implementation(libs.palette.ktx) // Palette for Images -> Colors
+    implementation(libs.colorpicker)
+    implementation(libs.newpipeextractor)
+    implementation(libs.juniversalchardet)
+    implementation(libs.shimmer)
+    implementation(libs.palette.ktx)
     implementation(libs.tvprovider)
-    implementation(libs.overlappingpanels) // Gestures
-    implementation(libs.biometric) // Fingerprint Authentication
-    implementation(libs.previewseekbar.media3) // SeekBar Preview
-    implementation(libs.qrcode.kotlin) // QR Code for PIN Auth on TV
+    implementation(libs.overlappingpanels)
+    implementation(libs.biometric)
+    implementation(libs.previewseekbar.media3)
+    implementation(libs.qrcode.kotlin)
 
-    // Extensions & Other Libs
-    implementation(libs.jsoup) // HTML Parser
-    implementation(libs.rhino) // Run JavaScript
+    implementation(libs.jsoup)
+    implementation(libs.rhino)
     implementation(libs.quickjs)
-    implementation(libs.fuzzywuzzy) // Library/Ext Searching with Levenshtein Distance
-    implementation(libs.safefile) // To Prevent the URI File Fu*kery
-    coreLibraryDesugaring(libs.desugar.jdk.libs.nio) // NIO Flavor Needed for NewPipeExtractor
-    implementation(libs.conscrypt.android) // To Fix SSL Fu*kery on Android 9
-    implementation(libs.jackson.module.kotlin) // JSON Parser
+    implementation(libs.fuzzywuzzy)
+    implementation(libs.safefile)
+    coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
+    implementation(libs.conscrypt.android)
+    implementation(libs.jackson.module.kotlin)
 
-    // Torrent Support
     implementation(libs.torrentserver)
 
-    // Downloading & Networking
     implementation(libs.work.runtime.ktx)
-    implementation(libs.nicehttp) // HTTP Lib
+    implementation(libs.nicehttp)
 
     implementation(project(":library") {
-        // There does not seem to be a good way of getting the android flavor.
         val isDebug = gradle.startParameter.taskRequests.any { task ->
-            task.args.any { arg ->
-                arg.contains("debug", true)
-            }
+            task.args.any { arg -> arg.contains("debug", true) }
         }
-
         this.extra.set("isDebug", isDebug)
     })
-} // <--- Kurung kurawal ini yang dicari-cari error tadi (Penutup Dependencies)
+}
 
 tasks.register<Jar>("androidSourcesJar") {
     archiveClassifier.set("sources")
-    from(android.sourceSets.getByName("main").java.srcDirs) // Full Sources
+    from(android.sourceSets.getByName("main").java.srcDirs)
 }
 
 tasks.register<Copy>("copyJar") {
@@ -261,13 +232,10 @@ tasks.register<Copy>("copyJar") {
     )
     into("build/app-classes")
     include("classes.jar", "library-jvm*.jar")
-    // Remove the version
     rename("library-jvm.*.jar", "library-jvm.jar")
 }
 
-// Merge the app classes and the library classes into classes.jar
 tasks.register<Jar>("makeJar") {
-    // Duplicates cause hard to catch errors, better to fail at compile time.
     duplicatesStrategy = DuplicatesStrategy.FAIL
     dependsOn(tasks.getByName("copyJar"))
     from(
@@ -296,7 +264,6 @@ dokka {
                 VisibilityModifier.Public,
                 VisibilityModifier.Protected
             )
-
             sourceLink {
                 localDirectory = file("..")
                 remoteUrl("https://github.com/recloudstream/cloudstream/tree/master")
