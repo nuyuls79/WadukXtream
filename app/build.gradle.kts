@@ -4,7 +4,7 @@ import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import java.util.Base64
+import java.util.Base64 // Import penting untuk decode kunci
 
 plugins {
     alias(libs.plugins.android.application)
@@ -45,23 +45,31 @@ android {
     }
 
     signingConfigs {
-        // --- BAGIAN INI YANG DITAMBAHKAN UNTUK MEMBACA SECRET GITHUB ---
+        // --- BAGIAN PERBAIKAN ---
         create("release") {
             val encodedKey = System.getenv("SIGNING_KEY")
             val keystoreFile = file("keystore.jks")
             
             if (encodedKey != null) {
-                // Decode teks Base64 dari Secret menjadi file Keystore asli
-                val decodedKey = Base64.getDecoder().decode(encodedKey)
-                keystoreFile.writeBytes(decodedKey)
-                
-                storeFile = keystoreFile
-                storePassword = System.getenv("KEY_STORE_PASSWORD")
-                keyAlias = System.getenv("ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+                try {
+                    // 1. Bersihkan spasi, enter, atau karakter sampah
+                    val cleanKey = encodedKey.trim().replace("\\s".toRegex(), "")
+                    
+                    // 2. Gunakan MimeDecoder yang lebih kebal error
+                    val decodedKey = Base64.getMimeDecoder().decode(cleanKey)
+                    
+                    keystoreFile.writeBytes(decodedKey)
+                    
+                    storeFile = keystoreFile
+                    storePassword = System.getenv("KEY_STORE_PASSWORD")
+                    keyAlias = System.getenv("ALIAS")
+                    keyPassword = System.getenv("KEY_PASSWORD")
+                } catch (e: Exception) {
+                    println("Gagal decode kunci: ${e.message}")
+                }
             }
         }
-        // -------------------------------------------------------------
+        // ------------------------
 
         if (prereleaseStoreFile != null) {
             create("prerelease") {
@@ -100,12 +108,12 @@ android {
 
     buildTypes {
         release {
-            // Aktifkan Config yang baru kita buat
+            // Menggunakan config release yang baru diperbaiki
             signingConfig = signingConfigs.getByName("release")
             
             isDebuggable = false
-            isMinifyEnabled = true // Disarankan True untuk release
-            isShrinkResources = true // Disarankan True untuk release
+            isMinifyEnabled = true 
+            isShrinkResources = true 
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
