@@ -378,7 +378,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             } catch (_: Throwable) {
             }
         }
-    }var lastPopup: SearchResponse? = null
+    }
+
+    var lastPopup: SearchResponse? = null
     fun loadPopup(result: SearchResponse, load: Boolean = true) {
         lastPopup = result
         val syncName = syncViewModel.syncName(result.apiName)
@@ -394,10 +396,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
         if (load) {
             viewModel.load(
-                this, result.url, result.apiName, false,
-                if (getApiDubstatusSettings().contains(DubStatus.Dubbed))
-                    DubStatus.Dubbed else DubStatus.Subbed,
-                null
+                this, result.url, result.apiName, false, if (getApiDubstatusSettings()
+                        .contains(DubStatus.Dubbed)
+                ) DubStatus.Dubbed else DubStatus.Subbed, null
             )
         } else {
             viewModel.loadSmall(result)
@@ -467,6 +468,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                     navRailView.menu.findItem(R.id.navigation_downloads).isChecked = true
                     navView.menu.findItem(R.id.navigation_downloads).isChecked = true
                 }
+
                 in listOf(
                     R.id.navigation_settings,
                     R.id.navigation_subtitles,
@@ -528,7 +530,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         } catch (e: Exception) {
             logError(e)
         }
-    }override fun dispatchKeyEvent(event: KeyEvent): Boolean =
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean =
         CommonActivity.dispatchKeyEvent(this, event) ?: super.dispatchKeyEvent(event)
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean =
@@ -572,11 +576,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             Log.d(TAG, if (result) "Deleted temporary file: $path" else "Failed to delete temporary file: $path")
         }
         filesToDelete = setOf()
-        val broadcastIntent = Intent().apply {
-            action = "restart_service"
-            setClass(this@MainActivity, VideoDownloadRestartReceiver::class.java)
-        }
-        sendBroadcast(broadcastIntent)
+        val broadcastIntent = Intent()
+        broadcastIntent.action = "restart_service"
+        broadcastIntent.setClass(this, VideoDownloadRestartReceiver::class.java)
+        this.sendBroadcast(broadcastIntent)
         afterPluginsLoadedEvent -= ::onAllPluginsLoaded
         super.onDestroy()
     }
@@ -669,7 +672,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                                     }
                             }
                         }
-                        apis = allProviders.distinctBy { it.lang + it.name + it.mainUrl + it.javaClass.name }
+                        apis =
+                            allProviders.distinctBy { it.lang + it.name + it.mainUrl + it.javaClass.name }
                         APIHolder.apiMap = null
                     } catch (e: Exception) {
                         logError(e)
@@ -688,7 +692,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         viewModel = ViewModelProvider(this)[ResultViewModel2::class.java]
         syncViewModel = ViewModelProvider(this)[SyncViewModel::class.java]
         return super.onCreateView(name, context, attrs)
-    }private fun hidePreviewPopupDialog() {
+    }
+
+    private fun hidePreviewPopupDialog() {
         bottomPreviewPopup.dismissSafe(this)
         bottomPreviewPopup = null
         bottomPreviewBinding = null
@@ -732,10 +738,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
     object TvFocus {
         data class FocusTarget(
-            val width: Int,
-            val height: Int,
-            val x: Float,
-            val y: Float,
+            val width: Int, val height: Int, val x: Float, val y: Float,
         ) {
             companion object {
                 fun lerp(a: FocusTarget, b: FocusTarget, lerp: Float): FocusTarget {
@@ -755,17 +758,18 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
         var focusOutline: WeakReference<View> = WeakReference(null)
         var lastFocus: WeakReference<View> = WeakReference(null)
-
-        private val layoutListener = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            lastFocus.get()?.apply {
-                updateFocusView(this, same = true)
-                postDelayed({ updateFocusView(lastFocus.get(), same = false) }, 300)
+        private val layoutListener: View.OnLayoutChangeListener =
+            View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+                lastFocus.get()?.apply {
+                    updateFocusView(this, same = true)
+                    postDelayed({ updateFocusView(lastFocus.get(), same = false) }, 300)
+                }
             }
-        }
-        private val attachListener = object : View.OnAttachStateChangeListener {
-            override fun onViewAttachedToWindow(v: View) { updateFocusView(v) }
-            override fun onViewDetachedFromWindow(v: View) { focusOutline.get()?.isVisible = false }
-        }
+        private val attachListener: View.OnAttachStateChangeListener =
+            object : View.OnAttachStateChangeListener {
+                override fun onViewAttachedToWindow(v: View) { updateFocusView(v) }
+                override fun onViewDetachedFromWindow(v: View) { focusOutline.get()?.isVisible = false }
+            }
 
         private fun setTargetPosition(target: FocusTarget) {
             focusOutline.get()?.apply {
@@ -801,11 +805,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
 
             val wasGone = focusOutline.isGone
-            val visible = newFocus != null &&
-                    newFocus.measuredHeight > 0 &&
-                    newFocus.measuredWidth > 0 &&
-                    newFocus.isShown &&
-                    newFocus.tag != "tv_no_focus_tag"
+            val visible = newFocus != null && newFocus.measuredHeight > 0 && newFocus.measuredWidth > 0 && newFocus.isShown && newFocus.tag != "tv_no_focus_tag"
             focusOutline.isVisible = visible
 
             if (newFocus != null) {
@@ -855,7 +855,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 var (x, y) = screenX.toFloat() to screenY.toFloat()
                 val (currentX, currentY) = focusOutline.translationX to focusOutline.translationY
 
-                if (!newFocus.isLtr()) x = x - focusOutline.rootView.width + newFocus.measuredWidth
+                if (!newFocus.isLtr()) {
+                    x = x - focusOutline.rootView.width + newFocus.measuredWidth
+                }
                 x -= targetDx
 
                 if (screenX == 0 && screenY == 0) {
@@ -866,27 +868,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                     newFocus.addOnLayoutChangeListener(layoutListener)
                     newFocus.addOnAttachStateChangeListener(attachListener)
                 }
-
-                val start = FocusTarget(
-                    x = currentX,
-                    y = currentY,
-                    width = focusOutline.measuredWidth,
-                    height = focusOutline.measuredHeight
-                )
-                val end = FocusTarget(
-                    x = x,
-                    y = y,
-                    width = newFocus.measuredWidth,
-                    height = newFocus.measuredHeight
-                )
+                val start = FocusTarget(x = currentX, y = currentY, width = focusOutline.measuredWidth, height = focusOutline.measuredHeight)
+                val end = FocusTarget(x = x, y = y, width = newFocus.measuredWidth, height = newFocus.measuredHeight)
 
                 val deltaMinX = min(end.width / 2, 60.toPx)
                 val deltaMinY = min(end.height / 2, 60.toPx)
-                if (start.width == end.width &&
-                    start.height == end.height &&
-                    (start.x - end.x).absoluteValue < deltaMinX &&
-                    (start.y - end.y).absoluteValue < deltaMinY
-                ) {
+                if (start.width == end.width && start.height == end.height && (start.x - end.x).absoluteValue < deltaMinX && (start.y - end.y).absoluteValue < deltaMinY) {
                     animator?.cancel()
                     last = start
                     current = end
@@ -903,7 +890,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
                 last = start
                 current = end
-
                 if (wasGone) {
                     setTargetPosition(current)
                     return
@@ -921,25 +907,30 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 }
 
                 if (!same) {
-                    newFocus.postDelayed({
-                        updateFocusView(lastFocus.get(), same = true)
-                    }, 200)
+                    newFocus.postDelayed({ updateFocusView(lastFocus.get(), same = true) }, 200)
                 }
             }
         }
-    }@Suppress("DEPRECATION_ERROR")
+    }
+    @Suppress("DEPRECATION_ERROR")
     override fun onCreate(savedInstanceState: Bundle?) {
+        // PERHATIAN: Pastikan 'app' dikenali. Jika merah, ganti dengan 'application' atau 'this'.
         app.initClient(this)
+        
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
         val errorFile = filesDir.resolve("last_error")
-        lastError = if (errorFile.exists() && errorFile.isFile) {
-            errorFile.readText(Charset.defaultCharset()).also { errorFile.delete() }
-        } else null
+        if (errorFile.exists() && errorFile.isFile) {
+            lastError = errorFile.readText(Charset.defaultCharset())
+            errorFile.delete()
+        } else {
+            lastError = null
+        }
 
         val settingsForProvider = SettingsJson()
         settingsForProvider.enableAdult =
             settingsManager.getBoolean(getString(R.string.enable_nsfw_on_providers_key), false)
+
         MainAPI.settingsForProvider = settingsForProvider
 
         loadThemes(this)
@@ -947,7 +938,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         setNavigationBarColorCompat(R.attr.primaryGrayBackground)
         updateLocale()
         super.onCreate(savedInstanceState)
-
         try {
             if (isCastApiAvailable()) {
                 CastContext.getSharedInstance(this) { it.run() }
@@ -960,7 +950,73 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         updateTv()
 
-        // --- MOD: Auto Repository & Bypass Setup ---
+        // backup when we update the app
+        safe {
+            val appVer = BuildConfig.VERSION_NAME
+            val lastAppAutoBackup: String = getKey("VERSION_NAME") ?: ""
+            if (appVer != lastAppAutoBackup) {
+                setKey("VERSION_NAME", BuildConfig.VERSION_NAME)
+                safe { backup(this) }
+                safe { PluginManager.deleteAllOatFiles(this) }
+            }
+        }
+
+        // --- SETUP BINDING / UI (PENTING: JANGAN DIHAPUS AGAR TIDAK BLANK) ---
+        binding = try {
+            if (isLayout(TV or EMULATOR)) {
+                val newLocalBinding = ActivityMainTvBinding.inflate(layoutInflater, null, false)
+                setContentView(newLocalBinding.root)
+
+                if (isLayout(TV) && ANIMATED_OUTLINE) {
+                    TvFocus.focusOutline = WeakReference(newLocalBinding.focusOutline)
+                    newLocalBinding.root.viewTreeObserver.addOnScrollChangedListener {
+                        TvFocus.updateFocusView(TvFocus.lastFocus.get(), same = true)
+                    }
+                    newLocalBinding.root.viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
+                        TvFocus.updateFocusView(newFocus)
+                    }
+                } else {
+                    newLocalBinding.focusOutline.isVisible = false
+                }
+
+                if (isLayout(TV)) {
+                    val exceptionButtons = listOf(
+                        R.id.home_preview_info_btt,
+                        R.id.home_preview_hidden_next_focus,
+                        R.id.home_preview_hidden_prev_focus,
+                        R.id.result_play_movie_button,
+                        R.id.result_play_series_button,
+                        R.id.result_resume_series_button,
+                        R.id.result_play_trailer_button,
+                        R.id.result_bookmark_Button,
+                        R.id.result_favorite_Button,
+                        R.id.result_subscribe_Button,
+                        R.id.result_search_Button,
+                        R.id.result_episodes_show_button,
+                    )
+
+                    newLocalBinding.root.viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
+                        if (exceptionButtons.contains(newFocus?.id)) return@addOnGlobalFocusChangeListener
+                        centerView(newFocus)
+                    }
+                }
+                ActivityMainBinding.bind(newLocalBinding.root)
+            } else {
+                val newLocalBinding = ActivityMainBinding.inflate(layoutInflater, null, false)
+                setContentView(newLocalBinding.root)
+                newLocalBinding
+            }
+        } catch (t: Throwable) {
+            showToast(txt(R.string.unable_to_inflate, t.message ?: ""), Toast.LENGTH_LONG)
+            null
+        }
+
+        binding?.apply {
+            fixSystemBarsPadding(navView, heightResId = R.dimen.nav_view_height, padTop = false, overlayCutout = false)
+            fixSystemBarsPadding(navRailView, widthResId = R.dimen.nav_rail_view_width, padRight = false, padTop = false)
+        }
+
+        // --- MOD START: Auto Repo, Bypass Setup, & Auto Plugin Install ---
         ioSafe {
             val repoAddedKey = "HAS_ADDED_MY_REPO"
             if (getKey(repoAddedKey, false) != true) {
@@ -974,15 +1030,440 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 }
             }
         }
+
         if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
             setKey(HAS_DONE_SETUP_KEY, true)
             updateLocale()
         }
 
-        // --- MOD: Auto Install Plugins First Run ---
+        // Panggil fungsi auto-install plugin (fungsi didefinisikan di Part 3)
         autoInstallPluginsFirstRun()
+        // --- MOD END ---
 
-        // ...lanjutan isi onCreate (binding, nav setup, dll) tetap sama seperti file asli...
+        val padding = settingsManager.getInt(getString(R.string.overscan_key), 0).toPx
+        binding?.homeRoot?.setPadding(padding, padding, padding, padding)
+        changeStatusBarState(isLayout(EMULATOR))
+
+        // Biometric logic
+        val noAccounts = settingsManager.getBoolean(getString(R.string.skip_startup_account_select_key), false) || accounts.count() <= 1
+        if (isLayout(PHONE) && isAuthEnabled(this) && noAccounts) {
+            if (deviceHasPasswordPinLock(this)) {
+                startBiometricAuthentication(this, R.string.biometric_authentication_title, false)
+                promptInfo?.let { prompt -> biometricPrompt?.authenticate(prompt) }
+                binding?.navHostFragment?.isInvisible = true
+            }
+        }
+
+        // JSDelivr proxy logic
+        if (this.getKey<Boolean>(getString(R.string.jsdelivr_proxy_key)) == null && isNetworkAvailable()) {
+            main {
+                if (checkGithubConnectivity()) {
+                    this.setKey(getString(R.string.jsdelivr_proxy_key), false)
+                } else {
+                    this.setKey(getString(R.string.jsdelivr_proxy_key), true)
+                    showSnackbar(this@MainActivity, R.string.jsdelivr_enabled, Snackbar.LENGTH_LONG, R.string.revert) { 
+                        setKey(getString(R.string.jsdelivr_proxy_key), false) 
+                    }
+                }
+            }
+        }
+
+        ioSafe { SafeFile.check(this@MainActivity) }
+
+        // Plugin Loading Logic
+        if (PluginManager.checkSafeModeFile()) {
+            safe { showToast(R.string.safe_mode_file, Toast.LENGTH_LONG) }
+        } else if (lastError == null) {
+            ioSafe {
+                DataStoreHelper.currentHomePage?.let { homeApi ->
+                    mainPluginsLoadedEvent.invoke(loadSinglePlugin(this@MainActivity, homeApi))
+                } ?: run {
+                    mainPluginsLoadedEvent.invoke(false)
+                }
+
+                ioSafe {
+                    if (settingsManager.getBoolean(getString(R.string.auto_update_plugins_key), true)) {
+                        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_updateAllOnlinePluginsAndLoadThem(this@MainActivity)
+                    } else {
+                        ___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(this@MainActivity)
+                    }
+
+                    val autoDownloadPlugin = AutoDownloadMode.getEnum(settingsManager.getInt(getString(R.string.auto_download_plugins_key), 0)) ?: AutoDownloadMode.Disable
+                    if (autoDownloadPlugin != AutoDownloadMode.Disable) {
+                        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_downloadNotExistingPluginsAndLoad(this@MainActivity, autoDownloadPlugin)
+                    }
+                }
+
+                ioSafe { PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllLocalPlugins(this@MainActivity, false) }
+            }
+        } else {
+            val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+            builder.setTitle(R.string.safe_mode_title)
+            builder.setMessage(R.string.safe_mode_description)
+            builder.apply {
+                setPositiveButton(R.string.safe_mode_crash_info) { _, _ ->
+                    val tbBuilder: AlertDialog.Builder = AlertDialog.Builder(context)
+                    tbBuilder.setTitle(R.string.safe_mode_title)
+                    tbBuilder.setMessage(lastError)
+                    tbBuilder.show()
+                }
+                setNegativeButton("Ok") { _, _ -> }
+            }
+            builder.show().setDefaultFocus()
+        }
+
+        fun setUserData(status: Resource<SyncAPI.AbstractSyncStatus>?) {
+            if (isLocalList) return
+            bottomPreviewBinding?.apply {
+                when (status) {
+                    is Resource.Success -> {
+                        resultviewPreviewBookmark.isEnabled = true
+                        resultviewPreviewBookmark.setText(status.value.status.stringRes)
+                        resultviewPreviewBookmark.setIconResource(status.value.status.iconRes)
+                    }
+                    is Resource.Failure -> {
+                        resultviewPreviewBookmark.isEnabled = false
+                        resultviewPreviewBookmark.setIconResource(R.drawable.ic_baseline_bookmark_border_24)
+                        resultviewPreviewBookmark.text = status.errorString
+                    }
+                    else -> {
+                        resultviewPreviewBookmark.isEnabled = false
+                        resultviewPreviewBookmark.setIconResource(R.drawable.ic_baseline_bookmark_border_24)
+                        resultviewPreviewBookmark.setText(R.string.loading)
+                    }
+                }
+            }
+        }
+
+        fun setWatchStatus(state: WatchType?) {
+            if (!isLocalList || state == null) return
+            bottomPreviewBinding?.resultviewPreviewBookmark?.apply {
+                setIconResource(state.iconRes)
+                setText(state.stringRes)
+            }
+        }
+
+        fun setSubscribeStatus(state: Boolean?) {
+            bottomPreviewBinding?.resultviewPreviewSubscribe?.apply {
+                if (state != null) {
+                    val drawable = if (state) R.drawable.ic_baseline_notifications_active_24 else R.drawable.baseline_notifications_none_24
+                    setImageResource(drawable)
+                }
+                isVisible = state != null
+                setOnClickListener {
+                    viewModel.toggleSubscriptionStatus(context) { newStatus: Boolean? ->
+                        if (newStatus == null) return@toggleSubscriptionStatus
+                        val message = if (newStatus) {
+                            SubscriptionWorkManager.enqueuePeriodicWork(context)
+                            R.string.subscription_new
+                        } else {
+                            R.string.subscription_deleted
+                        }
+                        val name = (viewModel.page.value as? Resource.Success)?.value?.title ?: txt(R.string.no_data).asStringNull(context) ?: ""
+                        showToast(txt(message, name), Toast.LENGTH_SHORT)
+                    }
+                }
+            }
+        }
+
+        observe(viewModel.watchStatus, ::setWatchStatus)
+        observe(syncViewModel.userData, ::setUserData)
+        observeNullable(viewModel.subscribeStatus, ::setSubscribeStatus)
+
+        observeNullable(viewModel.page) { resource ->
+            if (resource == null) {
+                hidePreviewPopupDialog()
+                return@observeNullable
+            }
+            when (resource) {
+                is Resource.Failure -> {
+                    showToast(R.string.error)
+                    viewModel.clear()
+                    hidePreviewPopupDialog()
+                }
+                is Resource.Loading -> {
+                    showPreviewPopupDialog().apply {
+                        resultviewPreviewLoading.isVisible = true
+                        resultviewPreviewResult.isVisible = false
+                        resultviewPreviewLoadingShimmer.startShimmer()
+                    }
+                }
+                is Resource.Success -> {
+                    val d = resource.value
+                    showPreviewPopupDialog().apply {
+                        resultviewPreviewLoading.isVisible = false
+                        resultviewPreviewResult.isVisible = true
+                        resultviewPreviewLoadingShimmer.stopShimmer()
+
+                        resultviewPreviewTitle.text = d.title
+                        resultviewPreviewMetaType.setText(d.typeText)
+                        resultviewPreviewMetaYear.setText(d.yearText)
+                        resultviewPreviewMetaDuration.setText(d.durationText)
+                        resultviewPreviewMetaRating.setText(d.ratingText)
+                        resultviewPreviewDescription.setTextHtml(d.plotText)
+                        
+                        val poster = if (isLayout(PHONE)) d.posterImage ?: d.posterBackgroundImage else d.posterBackgroundImage ?: d.posterImage
+                        resultviewPreviewPoster.loadImage(poster, headers = d.posterHeaders)
+
+                        setUserData(syncViewModel.userData.value)
+                        setWatchStatus(viewModel.watchStatus.value)
+                        setSubscribeStatus(viewModel.subscribeStatus.value)
+
+                        resultviewPreviewBookmark.setOnClickListener {
+                            if (isLocalList) {
+                                val value = viewModel.watchStatus.value ?: WatchType.NONE
+                                this@MainActivity.showBottomDialog(
+                                    WatchType.entries.map { getString(it.stringRes) }.toList(),
+                                    value.ordinal,
+                                    this@MainActivity.getString(R.string.action_add_to_bookmarks),
+                                    showApply = false,
+                                    {}) {
+                                    viewModel.updateWatchStatus(WatchType.entries[it], this@MainActivity)
+                                }
+                            } else {
+                                val value = (syncViewModel.userData.value as? Resource.Success)?.value?.status ?: SyncWatchType.NONE
+                                this@MainActivity.showBottomDialog(
+                                    SyncWatchType.entries.map { getString(it.stringRes) }.toList(),
+                                    value.ordinal,
+                                    this@MainActivity.getString(R.string.action_add_to_bookmarks),
+                                    showApply = false,
+                                    {}) {
+                                    syncViewModel.setStatus(SyncWatchType.entries[it].internalId)
+                                    syncViewModel.publishUserData()
+                                }
+                            }
+                        }
+
+                        observeNullable(viewModel.favoriteStatus) observeFavoriteStatus@{ isFavorite ->
+                            resultviewPreviewFavorite.isVisible = isFavorite != null
+                            if (isFavorite == null) return@observeFavoriteStatus
+                            val drawable = if (isFavorite) R.drawable.ic_baseline_favorite_24 else R.drawable.ic_baseline_favorite_border_24
+                            resultviewPreviewFavorite.setImageResource(drawable)
+                        }
+
+                        resultviewPreviewFavorite.setOnClickListener {
+                            viewModel.toggleFavoriteStatus(this@MainActivity) { newStatus: Boolean? ->
+                                if (newStatus == null) return@toggleFavoriteStatus
+                                val message = if (newStatus) R.string.favorite_added else R.string.favorite_removed
+                                val name = (viewModel.page.value as? Resource.Success)?.value?.title ?: txt(R.string.no_data).asStringNull(this@MainActivity) ?: ""
+                                showToast(txt(message, name), Toast.LENGTH_SHORT)
+                            }
+                        }
+
+                        if (isLayout(PHONE))
+                            resultviewPreviewDescription.setOnClickListener { view ->
+                                view.context?.let { ctx ->
+                                    AlertDialog.Builder(ctx, R.style.AlertDialogCustom)
+                                        .setMessage(d.plotText.asString(ctx).html())
+                                        .setTitle(d.plotHeaderText.asString(ctx))
+                                        .show()
+                                }
+                            }
+
+                        resultviewPreviewMoreInfo.setOnClickListener {
+                            viewModel.clear()
+                            hidePreviewPopupDialog()
+                            lastPopup?.let { loadSearchResult(it) }
+                        }
+                    }
+                }
+            }
+        }
+        // init accounts
+        ioSafe {
+            // we need to run this after we init all apis, otherwise currentSyncApi will fuck itself
+            this@MainActivity.runOnUiThread {
+                libraryViewModel = ViewModelProvider(this@MainActivity)[LibraryViewModel::class.java]
+                libraryViewModel?.currentApiName?.observe(this@MainActivity) {
+                    val syncAPI = libraryViewModel?.currentSyncApi
+                    Log.i("SYNC_API", "${syncAPI?.name}, ${syncAPI?.idPrefix}")
+                    val icon = if (syncAPI?.idPrefix == localListApi.idPrefix) {
+                        R.drawable.library_icon_selector
+                    } else {
+                        syncAPI?.icon ?: R.drawable.library_icon_selector
+                    }
+                    binding?.apply {
+                        navRailView.menu.findItem(R.id.navigation_library)?.setIcon(icon)
+                        navView.menu.findItem(R.id.navigation_library)?.setIcon(icon)
+                    }
+                }
+            }
+        }
+
+        SearchResultBuilder.updateCache(this)
+
+        ioSafe {
+            initAll()
+            apis = synchronized(allProviders) { allProviders.distinctBy { it } }
+        }
+
+        setUpBackup()
+        CommonActivity.init(this)
+        
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+
+        navController.addOnDestinationChangedListener { _: NavController, navDestination: NavDestination, bundle: Bundle? ->
+            updateNavBar(navDestination)
+            if (navDestination.matchDestination(R.id.navigation_search) && !nextSearchQuery.isNullOrBlank()) {
+                bundle?.apply { this.putString(SearchFragment.SEARCH_QUERY, nextSearchQuery) }
+            }
+            if (navDestination.matchDestination(R.id.navigation_home)) {
+                attachBackPressedCallback("MainActivity") {
+                    showConfirmExitDialog(settingsManager)
+                    setNavigationBarColorCompat(R.attr.primaryGrayBackground)
+                    updateLocale()
+                }
+            } else detachBackPressedCallback("MainActivity")
+        }
+
+        val rippleColor = ColorStateList.valueOf(getResourceColor(R.attr.colorPrimary, 0.1f))
+
+        binding?.navView?.apply {
+            itemRippleColor = rippleColor
+            itemActiveIndicatorColor = rippleColor
+            setupWithNavController(navController)
+            setOnItemSelectedListener { item -> onNavDestinationSelected(item, navController) }
+        }
+
+        binding?.navRailView?.apply {
+            if (isLayout(PHONE)) {
+                itemRippleColor = rippleColor
+                itemActiveIndicatorColor = rippleColor
+            } else {
+                val rippleColorTv = ColorStateList.valueOf(getResourceColor(R.attr.textColor, 1.0f))
+                val rippleColorTransparent = ColorStateList.valueOf(getResourceColor(R.attr.textColor, 0.2f))
+                itemSpacing = 12.toPx 
+                itemRippleColor = rippleColorTransparent
+                itemActiveIndicatorColor = rippleColorTv
+            }
+            setupWithNavController(navController)
+            setOnItemSelectedListener { item -> onNavDestinationSelected(item, navController) }
+
+            val navProfileRoot = findViewById<LinearLayout>(R.id.nav_footer_root)
+            if (isLayout(TV or EMULATOR)) {
+                val navProfilePic = findViewById<ImageView>(R.id.nav_footer_profile_pic)
+                val navProfileCard = findViewById<CardView>(R.id.nav_footer_profile_card)
+                navProfileCard?.setOnClickListener { showAccountSelectLinear() }
+                val homeViewModel = ViewModelProvider(this@MainActivity)[HomeViewModel::class.java]
+                observe(homeViewModel.currentAccount) { currentAccount ->
+                    if (currentAccount != null) {
+                        navProfilePic?.loadImage(currentAccount.image)
+                        navProfileRoot.isVisible = true
+                    } else {
+                        navProfileRoot.isGone = true
+                    }
+                }
+            } else {
+                navProfileRoot.isGone = true
+            }
+        }
+
+        val rail = binding?.navRailView
+        if (rail != null) {
+            binding?.navRailView?.labelVisibilityMode = NavigationRailView.LABEL_VISIBILITY_UNLABELED
+            var prevId: Int? = null
+            var prevView: View? = null
+            rail.findViewById<View?>(R.id.navigation_settings)?.nextFocusDownId = R.id.nav_footer_profile_card
+            for (id in arrayOf(R.id.navigation_home, R.id.navigation_search, R.id.navigation_library, R.id.navigation_downloads, R.id.navigation_settings)) {
+                val view = rail.findViewById<View?>(id) ?: continue
+                prevId?.let { view.nextFocusUpId = it }
+                prevView?.nextFocusDownId = id
+                prevView = view
+                prevId = id
+            }
+        }
+
+        for (view in listOf(binding?.navView, binding?.navRailView)) {
+            view?.findViewById<View?>(R.id.navigation_home)?.setOnLongClickListener {
+                binding?.root?.findViewById<RecyclerView?>(R.id.home_master_recycler)?.smoothScrollToPosition(0)
+                return@setOnLongClickListener true
+            }
+            view?.findViewById<View?>(R.id.navigation_library)?.setOnLongClickListener {
+                val viewPager = binding?.root?.findViewById<ViewPager2?>(R.id.viewpager) ?: return@setOnLongClickListener false
+                try {
+                    val children = (viewPager[0] as? RecyclerView)?.children ?: return@setOnLongClickListener false
+                    for (child in children) {
+                        child.findViewById<RecyclerView?>(R.id.page_recyclerview)?.smoothScrollToPosition(0)
+                    }
+                } catch (_: Throwable) { }
+                return@setOnLongClickListener true
+            }
+            view?.findViewById<View?>(R.id.navigation_search)?.setOnLongClickListener {
+                for (recyclerId in arrayOf(R.id.search_master_recycler, R.id.search_autofit_results, R.id.search_history_recycler)) {
+                    binding?.root?.findViewById<RecyclerView?>(recyclerId)?.smoothScrollToPosition(0)
+                }
+                return@setOnLongClickListener true
+            }
+            view?.findViewById<View?>(R.id.navigation_downloads)?.setOnLongClickListener {
+                val recycler: RecyclerView? = binding?.root?.findViewById(R.id.download_list) ?: binding?.root?.findViewById(R.id.download_child_list)
+                recycler?.smoothScrollToPosition(0)
+                return@setOnLongClickListener recycler != null
+            }
+        }
+
+        loadCache()
+        updateHasTrailers()
+
+        if (!checkWrite()) {
+            requestRW()
+            if (checkWrite()) return
+        }
+
+        if (BuildConfig.DEBUG) {
+            synchronized(allProviders) {
+                for (api in allProviders) {
+                    println("Scheme: https Host: ${api.mainUrl.removePrefix("https://")}")
+                }
+            }
+        }
+
+        handleAppIntent(intent)
+        ioSafe { runAutoUpdate() }
+        FcastManager().init(this, false)
+        APIRepository.dubStatusActive = getApiDubstatusSettings()
+
+        try {
+            loadCache()
+            File(filesDir, "exoplayer").deleteRecursively()
+            deleteFileOnExit(File(cacheDir, "exoplayer"))
+        } catch (e: Exception) {
+            logError(e)
+        }
+        
+        ioSafe { migrateResumeWatching() }
+
+        main {
+            val channelId = TvChannelUtils.getChannelId(this@MainActivity, getString(R.string.app_name))
+            if (channelId == null) {
+                TvChannelUtils.createTvChannel(this@MainActivity)
+            }
+        }
+
+        getKey<String>(USER_SELECTED_HOMEPAGE_API)?.let { homepage ->
+            DataStoreHelper.currentHomePage = homepage
+            removeKey(USER_SELECTED_HOMEPAGE_API)
+        }
+        
+        // Pengecekan akhir setup (Backup check karena kita sudah handle di awal)
+        try {
+            if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
+                 setKey(HAS_DONE_SETUP_KEY, true)
+            }
+        } catch (e: Exception) {
+            logError(e)
+        }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    setNavigationBarColorCompat(R.attr.primaryGrayBackground)
+                    updateLocale()
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        )
     }
 
     override fun onAuthenticationSuccess() {
@@ -995,23 +1476,22 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
     suspend fun checkGithubConnectivity(): Boolean {
         return try {
-            app.get(
-                "https://raw.githubusercontent.com/recloudstream/.github/master/connectivitycheck",
-                timeout = 5
-            ).text.trim() == "ok"
+            app.get("https://raw.githubusercontent.com/recloudstream/.github/master/connectivitycheck", timeout = 5).text.trim() == "ok"
         } catch (t: Throwable) {
             false
         }
     }
 
-    // === MOD FUNCTION ===
+    // === MOD FUNCTION: AUTO INSTALL PLUGINS ===
     private fun autoInstallPluginsFirstRun() {
         val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         val hasInstalled = prefs.getBoolean("HAS_INSTALLED_PLUGINS", false)
         if (!hasInstalled) {
             ioSafe {
                 try {
+                    // PENTING: Memuat semua plugin online dari repository yang sudah di-load
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(this@MainActivity)
+                    
                     prefs.edit().putBoolean("HAS_INSTALLED_PLUGINS", true).apply()
                     Log.i(TAG, "Auto-installed plugins from repository (first run)")
                 } catch (e: Exception) {
