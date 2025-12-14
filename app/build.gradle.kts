@@ -4,7 +4,7 @@ import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import java.util.Base64 // Import penting untuk decode kunci
+import java.util.Base64
 
 plugins {
     alias(libs.plugins.android.application)
@@ -45,31 +45,26 @@ android {
     }
 
     signingConfigs {
-        // --- BAGIAN PERBAIKAN ---
         create("release") {
             val encodedKey = System.getenv("SIGNING_KEY")
             val keystoreFile = file("keystore.jks")
             
             if (encodedKey != null) {
                 try {
-                    // 1. Bersihkan spasi, enter, atau karakter sampah
+                    // Membersihkan karakter sampah (spasi/enter) agar tidak error illegal char
                     val cleanKey = encodedKey.trim().replace("\\s".toRegex(), "")
-                    
-                    // 2. Gunakan MimeDecoder yang lebih kebal error
                     val decodedKey = Base64.getMimeDecoder().decode(cleanKey)
                     
                     keystoreFile.writeBytes(decodedKey)
-                    
                     storeFile = keystoreFile
                     storePassword = System.getenv("KEY_STORE_PASSWORD")
                     keyAlias = System.getenv("ALIAS")
                     keyPassword = System.getenv("KEY_PASSWORD")
                 } catch (e: Exception) {
-                    println("Gagal decode kunci: ${e.message}")
+                    println("Error decoding key: ${e.message}")
                 }
             }
         }
-        // ------------------------
 
         if (prereleaseStoreFile != null) {
             create("prerelease") {
@@ -94,6 +89,10 @@ android {
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
         resValue("string", "app_name", "AdiXtream") 
+        
+        // --- PERBAIKAN: Menambahkan warna yang hilang ---
+        resValue("color", "blackBoarder", "#FF000000") 
+        // -----------------------------------------------
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
@@ -108,9 +107,7 @@ android {
 
     buildTypes {
         release {
-            // Menggunakan config release yang baru diperbaiki
             signingConfig = signingConfigs.getByName("release")
-            
             isDebuggable = false
             isMinifyEnabled = true 
             isShrinkResources = true 
