@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -89,21 +90,39 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
         }
 
         // --- MODIFICATION START ---
-        // 1. Inisialisasi API Dasar (Tanpa parameter)
+        // 1. Init API
         try {
             initAll()
         } catch (e: Exception) {
             Log.e("CloudStreamApp", "Failed to initAPI", e)
         }
 
-        // 2. Jalankan Auto-Install Plugins & Repo
-        autoInstallPlugins(this)
+        // 2. Register Callback untuk menangkap MainActivity saat start
+        // Ini solusi untuk error "Receiver type mismatch"
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                // Cek apakah ini MainActivity, jika ya, jalankan setup
+                if (activity::class.java.simpleName == "MainActivity") {
+                    autoInstallPlugins(activity)
+                    
+                    // Lepas callback agar tidak dijalankan berulang kali
+                    unregisterActivityLifecycleCallbacks(this)
+                }
+            }
+
+            override fun onActivityStarted(activity: Activity) {}
+            override fun onActivityResumed(activity: Activity) {}
+            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivityStopped(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
         // --- MODIFICATION END ---
     }
 
     // === MOD FUNCTION ===
-    private fun autoInstallPlugins(context: Context) {
-        // Gunakan ioSafe agar berjalan di background thread
+    // Sekarang menerima 'Activity', bukan 'Context' agar bisa memanggil loadRepository
+    private fun autoInstallPlugins(activity: Activity) {
         ioSafe {
             try {
                 // A. Bypass Setup Wizard
@@ -116,21 +135,22 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
                 if (getKey<Boolean>(repoAddedKey) != true) {
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
                     
-                    // FIX: Gunakan context.loadRepository
-                    context.loadRepository(customRepoUrl)
+                    // Sekarang ini VALID karena 'activity' adalah instance dari Activity
+                    activity.loadRepository(customRepoUrl)
                     
                     setKey(repoAddedKey, true)
                     Log.i("CloudStreamApp", "MOD: Custom repository loaded.")
                 }
 
                 // C. Auto Install Plugins
-                val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+                val prefs = PreferenceManager.getDefaultSharedPreferences(activity)
                 val pluginInstalledKey = "HAS_INSTALLED_PLUGINS_AUTO"
                 val hasInstalled = prefs.getBoolean(pluginInstalledKey, false)
 
                 if (!hasInstalled) {
-                    // Download & Load plugin
-                    PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(context)
+                    // Suppress deprecation warning agar build tidak gagal
+                    @Suppress("DEPRECATION")
+                    PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(activity)
                     
                     prefs.edit().putBoolean(pluginInstalledKey, true).apply()
                     Log.i("CloudStreamApp", "MOD: Plugins auto-installed.")
