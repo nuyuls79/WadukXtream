@@ -1161,7 +1161,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
-
     @Suppress("DEPRECATION_ERROR")
     override fun onCreate(savedInstanceState: Bundle?) {
         app.initClient(this)
@@ -1282,27 +1281,35 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             )
         }
 
-        // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (FINAL FIX) ---
+        // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (FINAL FIX V3) ---
         
-        // 1. Auto Load Repository (DIAM-DIAM + AUTO INSTALL)
+        // 1. Auto Load Repository (DIAM-DIAM + AUTO INSTALL + FIX TYPE MISMATCH)
         ioSafe {
-            val repoAddedKey = "HAS_ADDED_MY_REPO_V2" // Ganti key biar dianggap baru lagi
+            val repoAddedKey = "HAS_ADDED_MY_REPO_V3" // Key versi baru
             if (getKey(repoAddedKey, false) != true) {
                 try {
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
                     
-                    // A. Parse repository secara manual (Bypass UI/Dialog)
+                    // A. Parse repository 
                     val parsedRepo = RepositoryManager.parseRepository(customRepoUrl)
                     
                     if (parsedRepo != null) {
-                        // B. Masukkan ke sistem tanpa permisi (Silent Add)
-                        RepositoryManager.addRepository(parsedRepo)
+                        // B. KONVERSI KE REPOSITORY DATA (PERBAIKAN ERROR GRADLE)
+                        // Membuat object RepositoryData secara manual
+                        val finalRepoData = com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData(
+                            parsedRepo.iconUrl,
+                            parsedRepo.name,
+                            customRepoUrl
+                        )
+
+                        // C. Masukkan ke sistem tanpa permisi (Silent Add)
+                        RepositoryManager.addRepository(finalRepoData)
                         
-                        // C. Tandai sudah selesai
+                        // D. Tandai sudah selesai
                         setKey(repoAddedKey, true) 
                         Log.i(TAG, "Silent-loaded custom repository: $customRepoUrl")
 
-                        // D. LANGSUNG TRIGGER DOWNLOAD PLUGIN OTOMATIS
+                        // E. LANGSUNG TRIGGER DOWNLOAD PLUGIN OTOMATIS
                         main {
                             PluginsViewModel.downloadAll(this@MainActivity, customRepoUrl, null)
                         }
@@ -1331,6 +1338,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             getString(R.string.skip_startup_account_select_key),
             false
         ) || accounts.count() <= 1
+
         if (isLayout(PHONE) && isAuthEnabled(this) && noAccounts) {
             if (deviceHasPasswordPinLock(this)) {
                 startBiometricAuthentication(this, R.string.biometric_authentication_title, false)
@@ -2039,6 +2047,30 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             DataStoreHelper.currentHomePage = homepage
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
+
+        // --- INI BAGIAN PENTING UNTUK BYPASS SETUP ---
+        // Jika kunci setup belum ada, kita buat TRUE dan JANGAN NAVIGASI KE SETUP LANGUAGE
+        try {
+            if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
+                setKey(HAS_DONE_SETUP_KEY, true)
+                // Kita tidak memanggil navController.navigate(...)
+                // Jadi aplikasi akan tetap di HomeFragment
+            } 
+            // Bagian ini biasanya mengarahkan ke setup extensions jika kosong, 
+            // tapi karena kita sudah load repo di atas, user akan baik-baik saja.
+            else if (PluginManager.getPluginsOnline().isEmpty()
+                && PluginManager.getPluginsLocal().isEmpty()
+            ) {
+                 // Opsional: Jika masih mau menampilkan halaman extensions jika kosong
+                 /* navController.navigate(
+                    R.id.navigation_setup_extensions,
+                    SetupFragmentExtensions.newInstance(false)
+                ) */
+            }
+        } catch (e: Exception) {
+            logError(e)
+        }
+        // ----------------------------------------------
 
 //        Used to check current focus for TV
 //        main {
