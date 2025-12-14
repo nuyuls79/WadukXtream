@@ -220,6 +220,10 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         }
 
         binding.apply {
+            // --- MODIFIKASI DIMULAI DARI SINI ---
+            // Sembunyikan tombol Ekstensi agar tidak terlihat
+            settingsExtensions.visibility = View.GONE
+            
             listOf(
                 settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
                 settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
@@ -227,7 +231,10 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                 settingsUi to R.id.action_navigation_global_to_navigation_settings_ui,
                 settingsProviders to R.id.action_navigation_global_to_navigation_settings_providers,
                 settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
-                settingsExtensions to R.id.action_navigation_global_to_navigation_settings_extensions,
+                
+                // Matikan baris navigasi ekstensi di bawah ini (sudah dikomentari)
+                // settingsExtensions to R.id.action_navigation_global_to_navigation_settings_extensions,
+            
             ).forEach { (view, navigationId) ->
                 view.apply {
                     setOnClickListener {
@@ -239,6 +246,7 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                     }
                 }
             }
+            // --- MODIFIKASI SELESAI ---
 
             // Default focus on TV
             if (isLayout(TV)) {
