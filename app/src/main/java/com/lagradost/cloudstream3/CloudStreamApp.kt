@@ -98,7 +98,6 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
         }
 
         // 2. Register Callback untuk menangkap MainActivity saat start
-        // Ini solusi untuk error "Receiver type mismatch"
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 // Cek apakah ini MainActivity, jika ya, jalankan setup
@@ -121,7 +120,6 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
     }
 
     // === MOD FUNCTION ===
-    // Sekarang menerima 'Activity', bukan 'Context' agar bisa memanggil loadRepository
     private fun autoInstallPlugins(activity: Activity) {
         ioSafe {
             try {
@@ -134,10 +132,7 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
                 val repoAddedKey = "HAS_ADDED_MY_REPO"
                 if (getKey<Boolean>(repoAddedKey) != true) {
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
-                    
-                    // Sekarang ini VALID karena 'activity' adalah instance dari Activity
                     activity.loadRepository(customRepoUrl)
-                    
                     setKey(repoAddedKey, true)
                     Log.i("CloudStreamApp", "MOD: Custom repository loaded.")
                 }
@@ -148,8 +143,8 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
                 val hasInstalled = prefs.getBoolean(pluginInstalledKey, false)
 
                 if (!hasInstalled) {
-                    // Suppress deprecation warning agar build tidak gagal
-                    @Suppress("DEPRECATION")
+                    // --- PERBAIKAN: Menambahkan Suppress Deprecation di sini ---
+                    @Suppress("DEPRECATION") 
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(activity)
                     
                     prefs.edit().putBoolean(pluginInstalledKey, true).apply()
