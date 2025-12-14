@@ -14,7 +14,7 @@ import com.lagradost.cloudstream3.mvvm.ioSafe
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.utils.ImageLoader.buildImageLoader
-import kotlinx.coroutines.runBlocking
+import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintStream
@@ -58,7 +58,7 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
             Thread.setDefaultUncaughtExceptionHandler(it)
         }
 
-        // ✅ Auto install plugin sekali saat first run, gunakan API publik
+        // ✅ Auto install plugin sekali saat first run
         autoInstallPluginsFirstRun()
     }
 
@@ -75,6 +75,7 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
     companion object {
         var exceptionHandler: ExceptionHandler? = null
 
+        /** Use to get Activity from Context. */
         tailrec fun Context.getActivity(): Activity? {
             return when (this) {
                 is Activity -> this
@@ -91,17 +92,30 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
                 setContext(WeakReference(value))
             }
 
-        // ... semua helper getKey/setKey/removeKey tetap sama ...
+        /** Helper untuk SharedPreferences */
+        fun getPrefBoolean(key: String, def: Boolean = false): Boolean {
+            val prefs = context?.let { PreferenceManager.getDefaultSharedPreferences(it) }
+            return prefs?.getBoolean(key, def) ?: def
+        }
+
+        fun setPrefBoolean(key: String, value: Boolean) {
+            val prefs = context?.let { PreferenceManager.getDefaultSharedPreferences(it) }
+            prefs?.edit()?.putBoolean(key, value)?.apply()
+        }
+
+        fun removePref(key: String) {
+            val prefs = context?.let { PreferenceManager.getDefaultSharedPreferences(it) }
+            prefs?.edit()?.remove(key)?.apply()
+        }
     }
 
     /** Auto install plugin dari repository hanya sekali saat first run */
     private fun autoInstallPluginsFirstRun() {
-        val prefs = getSharedPreferences("cloudstream_prefs", Context.MODE_PRIVATE)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val hasInstalled = prefs.getBoolean("HAS_INSTALLED_PLUGINS", false)
         if (!hasInstalled) {
             ioSafe {
                 try {
-                    // Gunakan API publik, bukan fungsi deprecated
                     PluginManager.updateAllOnlinePluginsAndLoadThem(this@CloudStreamApp)
                     prefs.edit().putBoolean("HAS_INSTALLED_PLUGINS", true).apply()
                 } catch (e: Exception) {
