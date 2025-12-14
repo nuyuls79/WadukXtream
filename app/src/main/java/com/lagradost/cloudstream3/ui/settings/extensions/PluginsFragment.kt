@@ -35,6 +35,9 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
 ) {
 
     private val pluginViewModel: PluginsViewModel by activityViewModels()
+    
+    // Variabel baru untuk memastikan auto-install hanya jalan sekali saat dibuka
+    private var hasAutoInstalled = false 
 
     override fun onDestroyView() {
         pluginViewModel.clear() // clear for the next observe
@@ -50,6 +53,9 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
         pluginViewModel.tvTypes.clear()
         pluginViewModel.selectedLanguages = listOf()
         pluginViewModel.clear()
+        
+        // Reset state auto install setiap kali fragment dibuat
+        hasAutoInstalled = false 
 
         // Filter by language set on preferred media
         activity?.let {
@@ -62,7 +68,6 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
         val name = arguments?.getString(PLUGINS_BUNDLE_NAME)
         val url = arguments?.getString(PLUGINS_BUNDLE_URL)
         val isLocal = arguments?.getBoolean(PLUGINS_BUNDLE_LOCAL) == true
-        // download all extensions button
         val downloadAllButton = binding.settingsToolbar.menu?.findItem(R.id.download_all)
 
         if (url == null || name == null) {
@@ -89,10 +94,9 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
                             }
                             .sortedBy {
                                 it.second.substringAfter("\u00a0").lowercase()
-                            } // name ignoring flag emoji
+                            } 
                             .toMutableList()
 
-                        // Move "none" to 1st position as it's special code to indicate unknown/missing language
                         if (languagesTagName.remove(Pair("none", "none"))) {
                             languagesTagName.add(0, Pair("none", getString(R.string.no_data)))
                         }
@@ -121,7 +125,6 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
             val searchView =
                 menu?.findItem(R.id.search_button)?.actionView as? SearchView
 
-            // Don't go back if active query
             setNavigationOnClickListener {
                 if (searchView?.isIconified == false) {
                     searchView.isIconified = true
@@ -145,11 +148,6 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
                 }
             })
         }
-//        searchView?.onActionViewCollapsed = {
-//            pluginViewModel.search(null)
-//        }
-
-        // Because onActionViewCollapsed doesn't wanna work we need this workaround :(
 
         binding.pluginRecyclerView.apply {
             setLinearListLayout(
@@ -165,7 +163,6 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
         }
 
         if (isLayout(TV or EMULATOR)) {
-            // Scrolling down does not reveal the whole RecyclerView on TV, add to bypass that.
             binding.pluginRecyclerView.setPadding(0, 0, 0, 200.toPx)
         }
 
@@ -174,10 +171,18 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
             if (scrollToTop) {
                 binding.pluginRecyclerView.scrollToPosition(0)
             }
+
+            // --- ADIXTREAM MODIFIKASI: AUTO INSTALL PLUGIN ---
+            if (!isLocal && !hasAutoInstalled && list.isNotEmpty()) {
+                // Tandai sudah dijalankan agar tidak looping
+                hasAutoInstalled = true
+                // Jalankan fungsi downloadAll secara otomatis
+                PluginsViewModel.downloadAll(activity, url, pluginViewModel)
+            }
+            // -------------------------------------------------
         }
 
         if (isLocal) {
-            // No download button and no categories on local
             downloadAllButton?.isVisible = false
             binding.settingsToolbar.menu?.findItem(R.id.lang_filter)?.isVisible = false
             pluginViewModel.updatePluginListLocal()
@@ -186,7 +191,6 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
         } else {
             pluginViewModel.updatePluginList(context, url)
             binding.tvtypesChipsScroll.root.isVisible = true
-            // not needed for users but may be useful for devs
             downloadAllButton?.isVisible = BuildConfig.DEBUG
 
             bindChips(
@@ -212,14 +216,5 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
                 putBoolean(PLUGINS_BUNDLE_LOCAL, isLocal)
             }
         }
-
-//        class RepoSearchView(context: Context) : android.widget.SearchView(context) {
-//            var onActionViewCollapsed = {}
-//
-//            override fun onActionViewCollapsed() {
-//                onActionViewCollapsed()
-//            }
-//        }
-
     }
 }
