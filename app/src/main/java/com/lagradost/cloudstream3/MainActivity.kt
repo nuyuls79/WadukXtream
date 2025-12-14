@@ -912,10 +912,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
-    @Suppress("DEPRECATION_ERROR")
+        @Suppress("DEPRECATION_ERROR")
     override fun onCreate(savedInstanceState: Bundle?) {
-        // PERHATIAN: Pastikan 'app' dikenali. Jika merah, ganti dengan 'application' atau 'this'.
-        app.initClient(this)
+        // Kita gunakan initClient(this) langsung karena sudah di-import
+        initClient(this) 
+
         
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
