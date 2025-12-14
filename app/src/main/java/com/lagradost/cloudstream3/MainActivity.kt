@@ -198,6 +198,10 @@ import android.content.ContentUris
 import com.lagradost.cloudstream3.ui.home.HomeFragment
 import com.lagradost.cloudstream3.utils.TvChannelUtils
 
+// --- FIX IMPORT YANG HILANG ---
+import com.lagradost.cloudstream3.ui.settings.AutoDownloadMode
+import com.lagradost.cloudstream3.utils.DubStatus
+
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
     companion object {
         var activityResultLauncher: ActivityResultLauncher<Intent>? = null
@@ -912,11 +916,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
-        @Suppress("DEPRECATION_ERROR")
+    @Suppress("DEPRECATION_ERROR")
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Kita gunakan initClient(this) langsung karena sudah di-import
-        initClient(this) 
-
+        // --- FIX: Gunakan initClient(this) langsung (tanpa app.) ---
+        initClient(this)
         
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
@@ -962,7 +965,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
 
-        // --- SETUP BINDING / UI (PENTING: JANGAN DIHAPUS AGAR TIDAK BLANK) ---
+        // --- SETUP BINDING / UI ---
         binding = try {
             if (isLayout(TV or EMULATOR)) {
                 val newLocalBinding = ActivityMainTvBinding.inflate(layoutInflater, null, false)
@@ -1037,7 +1040,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             updateLocale()
         }
 
-        // Panggil fungsi auto-install plugin (fungsi didefinisikan di Part 3)
         autoInstallPluginsFirstRun()
         // --- MOD END ---
 
@@ -1272,7 +1274,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         }
         // init accounts
         ioSafe {
-            // we need to run this after we init all apis, otherwise currentSyncApi will fuck itself
             this@MainActivity.runOnUiThread {
                 libraryViewModel = ViewModelProvider(this@MainActivity)[LibraryViewModel::class.java]
                 libraryViewModel?.currentApiName?.observe(this@MainActivity) {
@@ -1446,7 +1447,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
         
-        // Pengecekan akhir setup (Backup check karena kita sudah handle di awal)
         try {
             if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
                  setKey(HAS_DONE_SETUP_KEY, true)
@@ -1490,9 +1490,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         if (!hasInstalled) {
             ioSafe {
                 try {
-                    // PENTING: Memuat semua plugin online dari repository yang sudah di-load
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(this@MainActivity)
-                    
                     prefs.edit().putBoolean("HAS_INSTALLED_PLUGINS", true).apply()
                     Log.i(TAG, "Auto-installed plugins from repository (first run)")
                 } catch (e: Exception) {
