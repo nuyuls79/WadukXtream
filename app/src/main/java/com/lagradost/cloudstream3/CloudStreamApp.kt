@@ -89,9 +89,12 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
         }
 
         // --- MODIFICATION START ---
-        // 1. Inisialisasi API Dasar & DataStore
-        initAll(this)
-        DataStore.init(this)
+        // 1. Inisialisasi API Dasar (Tanpa parameter)
+        try {
+            initAll()
+        } catch (e: Exception) {
+            Log.e("CloudStreamApp", "Failed to initAPI", e)
+        }
 
         // 2. Jalankan Auto-Install Plugins & Repo
         autoInstallPlugins(this)
@@ -100,37 +103,37 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
 
     // === MOD FUNCTION ===
     private fun autoInstallPlugins(context: Context) {
-        // Gunakan ioSafe agar berjalan di background thread (tidak memblokir startup app)
+        // Gunakan ioSafe agar berjalan di background thread
         ioSafe {
             try {
-                // A. Bypass Setup Wizard (Langsung ke Home)
-                // Cek apakah setup sudah selesai, jika belum, tandai selesai.
+                // A. Bypass Setup Wizard
                 if (getKey<Boolean>(HAS_DONE_SETUP_KEY) != true) {
                     setKey(HAS_DONE_SETUP_KEY, true)
                 }
 
-                // B. Auto Load Repository (Hanya jalan sekali)
+                // B. Auto Load Repository
                 val repoAddedKey = "HAS_ADDED_MY_REPO"
                 if (getKey<Boolean>(repoAddedKey) != true) {
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
-                    // Load repository
-                    loadRepository(customRepoUrl)
+                    
+                    // FIX: Gunakan context.loadRepository
+                    context.loadRepository(customRepoUrl)
+                    
                     setKey(repoAddedKey, true)
-                    Log.i("CloudStreamApp", "MOD: Custom repository loaded successfully.")
+                    Log.i("CloudStreamApp", "MOD: Custom repository loaded.")
                 }
 
-                // C. Auto Install Plugins (Hanya jalan sekali)
+                // C. Auto Install Plugins
                 val prefs = PreferenceManager.getDefaultSharedPreferences(context)
                 val pluginInstalledKey = "HAS_INSTALLED_PLUGINS_AUTO"
                 val hasInstalled = prefs.getBoolean(pluginInstalledKey, false)
 
                 if (!hasInstalled) {
-                    // Download & Load plugin dari repo yang baru ditambahkan
+                    // Download & Load plugin
                     PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(context)
                     
-                    // Simpan status agar tidak download ulang setiap buka aplikasi
                     prefs.edit().putBoolean(pluginInstalledKey, true).apply()
-                    Log.i("CloudStreamApp", "MOD: Plugins auto-installed successfully.")
+                    Log.i("CloudStreamApp", "MOD: Plugins auto-installed.")
                 }
 
             } catch (e: Exception) {
