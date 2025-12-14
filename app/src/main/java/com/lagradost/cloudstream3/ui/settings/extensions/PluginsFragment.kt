@@ -74,6 +74,10 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
             dispatchBackPressed()
             return
         }
+        
+        // --- FIX: Buat variable final/immutable yang pasti TIDAK NULL untuk dipakai di dalam observe ---
+        val safeUrl: String = url 
+        // ------------------------------------------------------------------------------------------
 
         setToolBarScrollFlags()
         setUpToolbar(name)
@@ -81,7 +85,7 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
             setOnMenuItemClickListener { menuItem ->
                 when (menuItem?.itemId) {
                     R.id.download_all -> {
-                        PluginsViewModel.downloadAll(activity, url, pluginViewModel)
+                        PluginsViewModel.downloadAll(activity, safeUrl, pluginViewModel)
                     }
 
                     R.id.lang_filter -> {
@@ -158,7 +162,7 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
             setRecycledViewPool(PluginAdapter.sharedPool)
             adapter =
                 PluginAdapter {
-                    pluginViewModel.handlePluginAction(activity, url, it, isLocal)
+                    pluginViewModel.handlePluginAction(activity, safeUrl, it, isLocal)
                 }
         }
 
@@ -173,11 +177,10 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
             }
 
             // --- ADIXTREAM MODIFIKASI: AUTO INSTALL PLUGIN ---
+            // Menggunakan safeUrl untuk mencegah error NullPointer/TypeMismatch
             if (!isLocal && !hasAutoInstalled && list.isNotEmpty()) {
-                // Tandai sudah dijalankan agar tidak looping
                 hasAutoInstalled = true
-                // Jalankan fungsi downloadAll secara otomatis
-                PluginsViewModel.downloadAll(activity, url, pluginViewModel)
+                PluginsViewModel.downloadAll(activity, safeUrl, pluginViewModel)
             }
             // -------------------------------------------------
         }
@@ -189,7 +192,7 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
 
             binding.tvtypesChipsScroll.root.isVisible = false
         } else {
-            pluginViewModel.updatePluginList(context, url)
+            pluginViewModel.updatePluginList(context, safeUrl)
             binding.tvtypesChipsScroll.root.isVisible = true
             downloadAllButton?.isVisible = BuildConfig.DEBUG
 
