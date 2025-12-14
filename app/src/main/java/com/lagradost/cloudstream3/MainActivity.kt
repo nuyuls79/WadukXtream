@@ -194,9 +194,13 @@ import androidx.tvprovider.media.tv.Channel
 import androidx.tvprovider.media.tv.TvContractCompat
 import android.content.ComponentName
 import android.content.ContentUris
-
 import com.lagradost.cloudstream3.ui.home.HomeFragment
 import com.lagradost.cloudstream3.utils.TvChannelUtils
+
+// --- IMPORT TAMBAHAN ---
+import com.lagradost.cloudstream3.plugins.RepositoryManager
+import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
+// -----------------------
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
     companion object {
@@ -1278,20 +1282,31 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             )
         }
 
-        // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP ---
+        // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (FINAL FIX) ---
         
-        // 1. Auto Load Repository (Hanya jalan sekali saat pertama kali instal)
-        // Kita pakai pengecekan kunci agar tidak muncul terus-menerus setiap buka aplikasi
+        // 1. Auto Load Repository (DIAM-DIAM + AUTO INSTALL)
         ioSafe {
-            val repoAddedKey = "HAS_ADDED_MY_REPO"
+            val repoAddedKey = "HAS_ADDED_MY_REPO_V2" // Ganti key biar dianggap baru lagi
             if (getKey(repoAddedKey, false) != true) {
                 try {
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
-                    // Memuat repository
-                    loadRepository(customRepoUrl)
-                    // Menandai bahwa repo sudah dimuat agar tidak mengulang
-                    setKey(repoAddedKey, true) 
-                    Log.i(TAG, "Auto-loaded custom repository: $customRepoUrl")
+                    
+                    // A. Parse repository secara manual (Bypass UI/Dialog)
+                    val parsedRepo = RepositoryManager.parseRepository(customRepoUrl)
+                    
+                    if (parsedRepo != null) {
+                        // B. Masukkan ke sistem tanpa permisi (Silent Add)
+                        RepositoryManager.addRepository(parsedRepo)
+                        
+                        // C. Tandai sudah selesai
+                        setKey(repoAddedKey, true) 
+                        Log.i(TAG, "Silent-loaded custom repository: $customRepoUrl")
+
+                        // D. LANGSUNG TRIGGER DOWNLOAD PLUGIN OTOMATIS
+                        main {
+                            PluginsViewModel.downloadAll(this@MainActivity, customRepoUrl, null)
+                        }
+                    }
                 } catch (e: Exception) {
                     logError(e)
                 }
@@ -1299,10 +1314,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         }
         
         // 2. Bypass/Lewati Setup Wizard (Bahasa & Tema)
-        // Jika setup belum selesai, kita paksa selesai dan set bahasa default
         if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
              setKey(HAS_DONE_SETUP_KEY, true)
-             // Opsional: Paksa update locale jika diperlukan, tapi biasanya ikut sistem HP
              updateLocale() 
         }
         // -------------------------------------------------
@@ -1318,7 +1331,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             getString(R.string.skip_startup_account_select_key),
             false
         ) || accounts.count() <= 1
-
         if (isLayout(PHONE) && isAuthEnabled(this) && noAccounts) {
             if (deviceHasPasswordPinLock(this)) {
                 startBiometricAuthentication(this, R.string.biometric_authentication_title, false)
@@ -2027,30 +2039,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             DataStoreHelper.currentHomePage = homepage
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
-
-        // --- INI BAGIAN PENTING UNTUK BYPASS SETUP ---
-        // Jika kunci setup belum ada, kita buat TRUE dan JANGAN NAVIGASI KE SETUP LANGUAGE
-        try {
-            if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
-                setKey(HAS_DONE_SETUP_KEY, true)
-                // Kita tidak memanggil navController.navigate(...)
-                // Jadi aplikasi akan tetap di HomeFragment
-            } 
-            // Bagian ini biasanya mengarahkan ke setup extensions jika kosong, 
-            // tapi karena kita sudah load repo di atas, user akan baik-baik saja.
-            else if (PluginManager.getPluginsOnline().isEmpty()
-                && PluginManager.getPluginsLocal().isEmpty()
-            ) {
-                 // Opsional: Jika masih mau menampilkan halaman extensions jika kosong
-                 /* navController.navigate(
-                    R.id.navigation_setup_extensions,
-                    SetupFragmentExtensions.newInstance(false)
-                ) */
-            }
-        } catch (e: Exception) {
-            logError(e)
-        }
-        // ----------------------------------------------
 
 //        Used to check current focus for TV
 //        main {
