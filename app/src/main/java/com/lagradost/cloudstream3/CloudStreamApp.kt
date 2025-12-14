@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION") // Mematikan peringatan di file ini
+
 package com.lagradost.cloudstream3
 
 import android.app.Activity
@@ -87,7 +89,7 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
             Log.e("CloudStreamApp", "Failed to initAPI", e)
         }
 
-        // 2. Register Callback untuk menangkap MainActivity saat start
+        // 2. Register Callback
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 if (activity::class.java.simpleName == "MainActivity") {
@@ -108,12 +110,12 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
     private fun autoInstallPlugins(activity: Activity) {
         ioSafe {
             try {
-                // A. Bypass Setup Wizard
+                // A. Bypass Setup
                 if (getKey<Boolean>(HAS_DONE_SETUP_KEY) != true) {
                     setKey(HAS_DONE_SETUP_KEY, true)
                 }
 
-                // B. Auto Load Repository
+                // B. Auto Load Repo
                 val repoAddedKey = "HAS_ADDED_MY_REPO"
                 if (getKey<Boolean>(repoAddedKey) != true) {
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
@@ -122,24 +124,17 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
                     Log.i("CloudStreamApp", "MOD: Custom repository loaded.")
                 }
 
-                // C. Auto Install Plugins (TEKNIK REFLECTION / BYPASS COMPILER)
+                // C. Auto Install Plugins (PANGGIL LANGSUNG)
                 val prefs = PreferenceManager.getDefaultSharedPreferences(activity)
-                val pluginInstalledKey = "HAS_INSTALLED_PLUGINS_AUTO"
+                val pluginInstalledKey = "HAS_INSTALLED_PLUGINS_AUTO_V2" // Ganti key biar dia coba install lagi
                 val hasInstalled = prefs.getBoolean(pluginInstalledKey, false)
 
                 if (!hasInstalled) {
-                    try {
-                        // Kita panggil fungsi deprecated ini menggunakan Reflection Java.
-                        // Compiler tidak akan melihat ini sebagai error karena nama fungsinya hanya String.
-                        val methodName = "___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins"
-                        val method = PluginManager::class.java.getMethod(methodName, Context::class.java)
-                        method.invoke(PluginManager, activity)
-                        
-                        Log.i("CloudStreamApp", "MOD: Plugins auto-installed via Reflection.")
-                        prefs.edit().putBoolean(pluginInstalledKey, true).apply()
-                    } catch (e: Exception) {
-                        Log.e("CloudStreamApp", "MOD: Failed to load plugins via reflection", e)
-                    }
+                    // PANGGILAN INI AKAN BERHASIL JIKA 'allWarningsAsErrors = false' DI BUILD.GRADLE
+                    PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(activity)
+                    
+                    prefs.edit().putBoolean(pluginInstalledKey, true).apply()
+                    Log.i("CloudStreamApp", "MOD: Plugins auto-installed directly.")
                 }
 
             } catch (e: Exception) {
