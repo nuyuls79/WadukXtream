@@ -12,6 +12,9 @@
   <a href="#">
     <img src="https://img.shields.io/badge/Platform-Android-green?style=for-the-badge&logo=android" alt="Platform">
   </a>
+  <a href="https://github.com/michat88/AdiXtream/releases">
+    <img src="https://img.shields.io/github/downloads/michat88/AdiXtream/total?style=for-the-badge&color=orange&label=DOWNLOADS" alt="Total Downloads">
+  </a>
 </p>
 
 ---
