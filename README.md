@@ -15,6 +15,10 @@
   <a href="https://github.com/michat88/AdiXtream/releases">
     <img src="https://img.shields.io/github/downloads/michat88/AdiXtream/total?style=for-the-badge&color=orange&label=DOWNLOADS" alt="Total Downloads">
   </a>
+  <br>
+  <a href="https://saweria.co/michat88">
+    <img src="https://img.shields.io/badge/Saweria-Traktir%20Kopi-FFA500?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Traktir Kopi">
+  </a>
 </p>
 
 ---
@@ -53,6 +57,14 @@ Aplikasi ini sudah dilengkapi dengan penyedia konten populer, antara lain:
 3.  Jika diminta, izinkan instalasi dari **"Sumber Tidak Dikenal"** (Unknown Sources).
 4.  Buka aplikasi **AdiXtream**.
 5.  Tunggu sebentar untuk proses inisialisasi, dan selamat menonton!
+
+## ☕ Traktir Kopi (Support)
+
+Jika Anda merasa aplikasi ini bermanfaat dan ingin mendukung saya untuk terus berkarya (beli kuota & kopi), silakan klik link di bawah ini:
+
+🎁 **[Traktir saya via Saweria](https://saweria.co/michat88)**
+
+Dukungan Anda sangat berarti agar **AdiXtream** terus update! Terima kasih orang baik! 🙏
 
 ## ⚠️ Disclaimer
 
