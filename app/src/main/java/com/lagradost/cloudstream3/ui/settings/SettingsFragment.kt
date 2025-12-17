@@ -43,7 +43,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-// --- IMPORT TAMBAHAN UNTUK MODIFIKASI TOMBOL ---
+// --- IMPORT UNTUK MODIFIKASI UI KUSTOM ---
 import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Shader
@@ -51,7 +51,7 @@ import android.graphics.drawable.GradientDrawable
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.setPadding
-// ----------------------------------------------
+// -----------------------------------------
 
 class SettingsFragment : BaseFragment<MainSettingsBinding>(
     BaseFragment.BindingCreator.Inflate(MainSettingsBinding::inflate)
@@ -203,7 +203,7 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         binding.apply {
             settingsExtensions.visibility = View.GONE
 
-            // --- KODE MODIFIKASI: TOMBOL TENTANG DENGAN EFEK BENDERA ---
+            // --- TOMBOL TENTANG (EFEK BENDERA MERAH PUTIH) ---
             settingsAbout.setOnClickListener {
                 val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
                 builder.setTitle("Tentang AdiXtream")
@@ -225,21 +225,20 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                 val dialog: AlertDialog = builder.create()
                 dialog.show()
 
-                // Modifikasi tampilan tombol setelah dialog muncul
                 val sourceCodeButton: Button? = dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
                 
                 sourceCodeButton?.let { button ->
-                    // 1. Berikan bingkai agar terlihat seperti tombol
+                    // Bingkai Putih
                     val shape = GradientDrawable().apply {
                         shape = GradientDrawable.RECTANGLE
-                        cornerRadius = 6.toPx().toFloat()
-                        setStroke(1.toPx(), Color.WHITE) // Garis pinggir putih
-                        setColor(Color.TRANSPARENT)      // Latar transparan
+                        cornerRadius = 6.toPx.toFloat()
+                        setStroke(1.toPx, Color.WHITE)
+                        setColor(Color.TRANSPARENT)
                     }
                     button.background = shape
-                    button.setPadding(15.toPx(), 0, 15.toPx(), 0)
+                    button.setPadding(15.toPx, 0, 15.toPx, 0)
 
-                    // 2. Terapkan efek Shader Merah-Putih Horizontal
+                    // Efek Teks Merah Putih
                     button.post {
                         val paint = button.paint
                         val height = button.height.toFloat()
@@ -247,21 +246,21 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                         val shader = LinearGradient(
                             0f, 0f, 0f, height,
                             intArrayOf(
-                                Color.RED,   // Atas: Merah
-                                Color.RED,   // Tengah: Merah
-                                Color.WHITE, // Tengah: Putih
-                                Color.WHITE  // Bawah: Putih
+                                Color.RED,   
+                                Color.RED,   
+                                Color.WHITE, 
+                                Color.WHITE  
                             ),
-                            floatArrayOf(0f, 0.45f, 0.55f, 1f), // Titik peralihan warna
+                            floatArrayOf(0f, 0.45f, 0.55f, 1f),
                             Shader.TileMode.CLAMP
                         )
                         
                         paint.shader = shader
-                        button.invalidate() // Segarkan UI
+                        button.invalidate()
                     }
                 }
             }
-            // -----------------------------------------------------------
+            // --------------------------------------------------
 
             listOf(
                 settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
