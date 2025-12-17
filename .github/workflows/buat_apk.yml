@@ -1,48 +1,25 @@
-name: Build Release (FIXED PATH)
+name: 1. GENERATE KUNCI BARU (JALANKAN SEKALI)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-      - main
 
 jobs:
-  build:
-    name: Build Signed APK
+  bikin_kunci:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Siapkan Java (JDK 17)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'gradle'
-
-      # PERBAIKAN DISINI: 
-      # Menambahkan 'app/' agar file masuk ke folder yang benar
-      - name: Decode Keystore dari Secret
+      - name: Buat Keystore Baru
         run: |
-          echo "${{ secrets.SIGNING_KEY }}" | base64 -d > app/release.keystore
-
-      - name: Izinkan Gradle
-        run: chmod +x gradlew
-
-      - name: Mulai Proses Build
-        run: ./gradlew assembleRelease
-        env:
-          # Karena file sudah ada di dalam folder app, kita panggil namanya saja
-          KEYSTORE_PATH: release.keystore
-          ALIAS: ${{ secrets.ALIAS }}
-          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-
-      - name: Upload APK ke GitHub
-        uses: actions/upload-artifact@v4
-        with:
-          name: AdiXtream-Release
-          path: app/build/outputs/apk/release/*.apk
+          # Membuat file keystore baru dengan password '161105' dan alias 'adixtream'
+          keytool -genkey -v -keystore app_keystore.jks \
+            -alias adixtream \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass 161105 -keypass 161105 \
+            -dname "CN=AdiXtream, OU=Dev, O=Adi, L=Indo, S=ID, C=ID"
+            
+      - name: Ubah ke Base64 (COPY KODE INI)
+        run: |
+          echo "👇👇👇 COPY SEMUA KODE DI BAWAH INI (DARI MULAI HURUF M SAMPAI SIMBOL =) 👇👇👇"
+          echo ""
+          base64 -w 0 app_keystore.jks
+          echo ""
+          echo "👆👆👆 SAMPAI SINI 👆👆👆"
