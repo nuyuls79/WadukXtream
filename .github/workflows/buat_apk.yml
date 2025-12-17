@@ -1,4 +1,4 @@
-name: Build Release (FIXED SECRET)
+name: Build Release (FIXED PATH)
 
 on:
   workflow_dispatch:
@@ -23,20 +23,19 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      # BAGIAN PENTING 1: Mengambil Kunci dari Secret GitHub
-      # Ini akan mengubah kode rahasia menjadi file keystore asli
+      # PERBAIKAN DISINI: 
+      # Menambahkan 'app/' agar file masuk ke folder yang benar
       - name: Decode Keystore dari Secret
         run: |
-          echo "${{ secrets.SIGNING_KEY }}" | base64 -d > release.keystore
+          echo "${{ secrets.SIGNING_KEY }}" | base64 -d > app/release.keystore
 
       - name: Izinkan Gradle
         run: chmod +x gradlew
 
-      # BAGIAN PENTING 2: Mengirim Password ke Gradle
-      # Tanpa bagian ini, build.gradle.kts tidak tahu passwordnya
       - name: Mulai Proses Build
         run: ./gradlew assembleRelease
         env:
+          # Karena file sudah ada di dalam folder app, kita panggil namanya saja
           KEYSTORE_PATH: release.keystore
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
