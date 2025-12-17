@@ -43,7 +43,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-// --- IMPORT UNTUK MODIFIKASI UI KUSTOM ---
+// --- IMPORT UNTUK MODIFIKASI UI ---
 import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Shader
@@ -51,7 +51,7 @@ import android.graphics.drawable.GradientDrawable
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.setPadding
-// -----------------------------------------
+// ----------------------------------
 
 class SettingsFragment : BaseFragment<MainSettingsBinding>(
     BaseFragment.BindingCreator.Inflate(MainSettingsBinding::inflate)
@@ -203,7 +203,7 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         binding.apply {
             settingsExtensions.visibility = View.GONE
 
-            // --- TOMBOL TENTANG (EFEK BENDERA MERAH PUTIH) ---
+            // --- TOMBOL TENTANG (FIXED: MERAH PUTIH HORIZONTAL SPLIT) ---
             settingsAbout.setOnClickListener {
                 val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
                 builder.setTitle("Tentang AdiXtream")
@@ -211,8 +211,7 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                 
                 builder.setNeutralButton("Kode Sumber") { _, _ ->
                     try {
-                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/michat88/AdiXtream"))
-                        startActivity(browserIntent)
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/michat88/AdiXtream")))
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -228,7 +227,7 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                 val sourceCodeButton: Button? = dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
                 
                 sourceCodeButton?.let { button ->
-                    // Bingkai Putih
+                    // 1. Bingkai Putih (Menggunakan toPx sebagai property)
                     val shape = GradientDrawable().apply {
                         shape = GradientDrawable.RECTANGLE
                         cornerRadius = 6.toPx.toFloat()
@@ -238,29 +237,32 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                     button.background = shape
                     button.setPadding(15.toPx, 0, 15.toPx, 0)
 
-                    // Efek Teks Merah Putih
+                    // 2. Efek Shader Merah Putih Horizontal
                     button.post {
-                        val paint = button.paint
-                        val height = button.height.toFloat()
-                        
-                        val shader = LinearGradient(
-                            0f, 0f, 0f, height,
-                            intArrayOf(
-                                Color.RED,   
-                                Color.RED,   
-                                Color.WHITE, 
-                                Color.WHITE  
-                            ),
-                            floatArrayOf(0f, 0.45f, 0.55f, 1f),
-                            Shader.TileMode.CLAMP
-                        )
-                        
-                        paint.shader = shader
-                        button.invalidate()
+                        if (button.height > 0) {
+                            val paint = button.paint
+                            val height = button.height.toFloat()
+                            
+                            // Menggunakan transisi tajam di 50% (0.49 ke 0.51)
+                            val shader = LinearGradient(
+                                0f, 0f, 0f, height,
+                                intArrayOf(
+                                    Color.RED,   // Merah (Atas)
+                                    Color.RED,   // Batas Merah
+                                    Color.WHITE, // Batas Putih
+                                    Color.WHITE  // Putih (Bawah)
+                                ),
+                                floatArrayOf(0f, 0.49f, 0.51f, 1f),
+                                Shader.TileMode.CLAMP
+                            )
+                            
+                            paint.shader = shader
+                            button.invalidate()
+                        }
                     }
                 }
             }
-            // --------------------------------------------------
+            // -----------------------------------------------------------
 
             listOf(
                 settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
