@@ -9,10 +9,10 @@ jobs:
 
     steps:
       - name: Ambil Kode (Checkout)
-        uses: actions/checkout@v4  # <-- Saya update jadi v4
+        uses: actions/checkout@v4
 
       - name: Siapkan Java (JDK 17)
-        uses: actions/setup-java@v4 # <-- Saya update jadi v4
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -20,11 +20,14 @@ jobs:
       - name: Beri Izin Eksekusi Gradle
         run: chmod +x gradlew
 
-      - name: Generate Dokumentasi (Dokka)
-        run: ./gradlew dokkaHtml --no-daemon
+      - name: Generate Dokumentasi (Dokka V2)
+        # PERBAIKAN: Menggunakan dokkaGenerateHtml dan mematikan configuration-cache
+        run: ./gradlew dokkaGenerateHtml --no-configuration-cache --no-daemon
 
       - name: Upload Hasil Dokumentasi
-        uses: actions/upload-artifact@v4 # <-- INI PERBAIKAN UTAMANYA (v3 -> v4)
+        uses: actions/upload-artifact@v4
         with:
           name: Dokumentasi-AdiXtream-HTML
+          # PERBAIKAN PATH: Dokka V2 biasanya outputnya ada di folder build/dokka/html
+          # Kita ambil folder build/dokka agar lebih aman menangkap hasilnya
           path: app/build/dokka/html/
