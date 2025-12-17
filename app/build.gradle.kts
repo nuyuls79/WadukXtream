@@ -43,18 +43,18 @@ android {
 
     signingConfigs {
         create("release") {
-            // Kita suruh Gradle baca file yang NANTI akan dibuat oleh Robot GitHub
+            // Pastikan file keystore.jks ada di folder 'app/'
             storeFile = file("keystore.jks")
-            storePassword = "161105"  // Password Hardcode
-            keyAlias = "adixtream"    // Alias Hardcode
-            keyPassword = "161105"    // Password Hardcode
+            storePassword = "161105"
+            keyAlias = "adixtream"
+            keyPassword = "161105"
         }
     }
 
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.adixtream.app" 
+        applicationId = "com.adixtream.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 67
@@ -62,8 +62,8 @@ android {
 
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
-        resValue("string", "app_name", "AdiXtream") 
-        resValue("color", "blackBoarder", "#FF000000") 
+        resValue("string", "app_name", "AdiXtream")
+        resValue("color", "blackBoarder", "#FF000000")
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
@@ -80,8 +80,8 @@ android {
         release {
             signingConfig = signingConfigs.getByName("release")
             isDebuggable = false
-            isMinifyEnabled = false 
-            isShrinkResources = false 
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
@@ -231,7 +231,9 @@ dokka {
             )
             sourceLink {
                 localDirectory = file("..")
-                remoteUrl("https://github.com/recloudstream/cloudstream/tree/master")
+                // --- UPDATE DILAKUKAN DI SINI ---
+                [span_0](start_span)// Sebelumnya recloudstream/cloudstream, sekarang michat88/AdiXtream[span_0](end_span)
+                remoteUrl("https://github.com/michat88/AdiXtream/tree/master")
                 remoteLineSuffix = "#L"
             }
         }
