@@ -33,8 +33,11 @@ import java.io.InputStreamReader
 
 class InAppUpdater {
     companion object {
-        private const val GITHUB_USER_NAME = "recloudstream"
-        private const val GITHUB_REPO = "cloudstream"
+        // --- PERUBAHAN DI SINI ---
+        // Mengarahkan update ke repo michat88/AdiXtream
+        private const val GITHUB_USER_NAME = "michat88"
+        private const val GITHUB_REPO = "AdiXtream"
+        // -------------------------
 
         private const val LOG_TAG = "InAppUpdater"
 
