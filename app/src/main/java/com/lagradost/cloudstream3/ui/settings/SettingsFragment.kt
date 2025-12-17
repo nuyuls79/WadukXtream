@@ -1,13 +1,16 @@
 package com.lagradost.cloudstream3.ui.settings
 
 import android.content.Intent
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
-import android.graphics.Matrix // <--- IMPORT BARU UNTUK PRESISI
-import android.graphics.Rect   // <--- IMPORT BARU UNTUK MENGUKUR TEKS
+import android.graphics.Paint
 import android.graphics.Shader
 import android.net.Uri
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ReplacementSpan
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
@@ -51,6 +54,40 @@ import java.util.TimeZone
 class SettingsFragment : BaseFragment<MainSettingsBinding>(
     BaseFragment.BindingCreator.Inflate(MainSettingsBinding::inflate)
 ) {
+
+    // --- KELAS KHUSUS UNTUK GRADASI MERAH PUTIH ---
+    // Kita buat "Stiker" teks custom di sini agar tidak di-reset oleh sistem
+    class MerahPutihSpan : ReplacementSpan() {
+        override fun getSize(paint: Paint, text: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
+            // Memberi tahu sistem seberapa lebar teks ini
+            return paint.measureText(text, start, end).toInt()
+        }
+
+        override fun draw(canvas: Canvas, text: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
+            // 1. Hitung tinggi huruf asli (Ascent sampai Descent)
+            val textTop = y + paint.ascent()
+            val textBottom = y + paint.descent()
+            
+            // 2. Buat Cat Warna Merah Putih (Gradient)
+            // Koordinat Y: Dari Atas Huruf sampai Bawah Huruf
+            val shader = LinearGradient(
+                0f, textTop, 0f, textBottom,
+                intArrayOf(Color.RED, Color.RED, Color.WHITE, Color.WHITE), // Warna
+                floatArrayOf(0f, 0.50f, 0.50f, 1f), // Posisi (50% Merah, 50% Putih)
+                Shader.TileMode.CLAMP
+            )
+            
+            // 3. Terapkan Shader dan Gambar Teks
+            val originalShader = paint.shader
+            paint.shader = shader
+            canvas.drawText(text, start, end, x, y.toFloat(), paint)
+            
+            // 4. Bersihkan (Kembalikan ke setting awal agar tidak merusak teks lain)
+            paint.shader = originalShader
+        }
+    }
+    // ----------------------------------------------
+
     companion object {
         fun PreferenceFragmentCompat?.getPref(id: Int): Preference? {
             if (this == null) return null
@@ -230,14 +267,20 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
             // Sembunyikan tombol extensions jika tidak diinginkan
             settingsExtensions.visibility = View.GONE
 
-            // --- LOGIKA TOMBOL TENTANG (MERAH PUTIH PRESISI) ---
+            // --- LOGIKA TOMBOL TENTANG (MERAH PUTIH ANTI-GAGAL) ---
             settingsAbout.setOnClickListener {
                 val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
                 builder.setTitle("Tentang AdiXtream")
                 builder.setMessage("AdiXtream dikembangkan oleh michat88.\n\nAplikasi ini berbasis pada proyek open-source CloudStream.\n\nTerima kasih yang sebesar-besarnya kepada Developer CloudStream (Lagradost & Tim) atas kode sumber yang luar biasa ini.")
 
-                // Set teks normal dulu
-                builder.setNeutralButton("Kode Sumber") { _, _ ->
+                // 1. Buat Spannable String
+                val textMerahPutih = SpannableString("Kode Sumber")
+                
+                // 2. Tempelkan "Stiker" GradientSpan ke SELURUH teks
+                textMerahPutih.setSpan(MerahPutihSpan(), 0, textMerahPutih.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+                // 3. Masukkan ke tombol
+                builder.setNeutralButton(textMerahPutih) { _, _ ->
                     try {
                         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/michat88/AdiXtream"))
                         startActivity(browserIntent)
@@ -250,43 +293,9 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                     dialog.dismiss()
                 }
                 
-                // Tampilkan dialog terlebih dahulu
-                val dialog = builder.create()
-                dialog.show()
-
-                // SETELAH dialog muncul, kita warnai tombolnya dengan presisi
-                try {
-                    val btnKodeSumber = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
-                    btnKodeSumber?.let { btn ->
-                        val text = btn.text.toString()
-                        val paint = btn.paint
-                        val bounds = Rect()
-                        // 1. Ukur kotak pembatas teks yang sebenarnya
-                        paint.getTextBounds(text, 0, text.length, bounds)
-                        val height = bounds.height().toFloat()
-
-                        // 2. Buat Shader Merah Putih yang tajam (tepat 50%)
-                        val shader = LinearGradient(
-                            0f, 0f, 0f, height,
-                            intArrayOf(Color.RED, Color.RED, Color.WHITE, Color.WHITE),
-                            floatArrayOf(0f, 0.50f, 0.50f, 1f), // Tepat setengah-setengah
-                            Shader.TileMode.CLAMP
-                        )
-
-                        // 3. Gunakan Matriks untuk menggeser shader agar pas di huruf
-                        // Teks digambar dari garis dasar (baseline), jadi kita perlu menggeser
-                        // shader ke atas sejauh batas atas teks (bounds.top biasanya negatif).
-                        val matrix = Matrix()
-                        matrix.setTranslate(0f, bounds.top.toFloat())
-                        shader.setLocalMatrix(matrix)
-                        
-                        // Terapkan ke tombol
-                        btn.paint.shader = shader
-                        btn.invalidate()
-                    }
-                } catch (e: Exception) {
-                    Log.e("SettingsFragment", "Gagal mewarnai tombol: ${e.message}")
-                }
+                builder.show()
+                // Kita tidak perlu lagi mengutak-atik tombol setelah show()
+                // karena ReplacementSpan sudah menangani warnanya dari dalam.
             }
             // ------------------------------------
 
