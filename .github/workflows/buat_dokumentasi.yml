@@ -1,7 +1,7 @@
 name: Buat Dokumentasi AdiXtream
 
 on:
-  workflow_dispatch: # Ini supaya muncul tombol "Run Workflow" manual
+  workflow_dispatch:
 
 jobs:
   generate_docs:
@@ -9,10 +9,10 @@ jobs:
 
     steps:
       - name: Ambil Kode (Checkout)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # <-- Saya update jadi v4
 
       - name: Siapkan Java (JDK 17)
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4 # <-- Saya update jadi v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -24,7 +24,7 @@ jobs:
         run: ./gradlew dokkaHtml --no-daemon
 
       - name: Upload Hasil Dokumentasi
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # <-- INI PERBAIKAN UTAMANYA (v3 -> v4)
         with:
           name: Dokumentasi-AdiXtream-HTML
           path: app/build/dokka/html/
