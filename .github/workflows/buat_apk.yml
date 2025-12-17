@@ -1,4 +1,4 @@
-name: Build Release (FINAL)
+name: Build Release (FINAL FIX)
 
 on:
   workflow_dispatch:
@@ -23,8 +23,6 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      # MENGAMBIL KUNCI DARI SECRET YANG BARU KAMU SIMPAN
-      # Dan menyimpannya ke dalam folder app/ agar terbaca oleh Gradle
       - name: Decode Keystore dari Secret
         run: |
           echo "${{ secrets.SIGNING_KEY }}" | base64 -d > app/release.keystore
@@ -32,7 +30,6 @@ jobs:
       - name: Izinkan Gradle
         run: chmod +x gradlew
 
-      # MEMULAI PROSES BUILD
       - name: Mulai Proses Build
         run: ./gradlew assembleRelease
         env:
@@ -45,4 +42,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: AdiXtream-Release
-          path: app/build/outputs/apk/release/*.apk
+          # PERBAIKAN DISINI: 
+          # Menambahkan /**/ agar dia mencari di dalam folder 'stable' juga
+          path: app/build/outputs/apk/**/*.apk
