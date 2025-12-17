@@ -384,29 +384,17 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         }
 
         try {
-            beneneCount =
-                settingsManager.getInt(getString(R.string.benene_count), 0)
             getPref(R.string.benene_count)?.let { pref ->
-                pref.summary =
-                    if (beneneCount <= 0) getString(R.string.benene_count_text_none) else getString(
-                        R.string.benene_count_text
-                    ).format(
-                        beneneCount
-                    )
-
+                // UBAH LOGIKA DI SINI: Langsung buka link Saweria
+                pref.summary = "Dukung pengembangan AdiXtream di Saweria" // Ubah teks ringkasan agar sesuai
+                
                 pref.setOnPreferenceClickListener {
                     try {
-                        beneneCount++
-                        if (beneneCount%20 == 0) {
-                            activity?.navigate(R.id.action_navigation_settings_general_to_easterEggMonkeFragment)
-                        }
-                        settingsManager.edit {
-                            putInt(
-                                getString(R.string.benene_count),
-                                beneneCount
-                            )
-                        }
-                        it.summary = getString(R.string.benene_count_text).format(beneneCount)
+                        // Link donasi Saweria milikmu
+                        val url = "https://saweria.co/michat88"
+                        val i = android.content.Intent(android.content.Intent.ACTION_VIEW)
+                        i.data = android.net.Uri.parse(url)
+                        startActivity(i)
                     } catch (e: Exception) {
                         logError(e)
                     }
