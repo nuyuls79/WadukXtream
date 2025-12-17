@@ -43,7 +43,7 @@ android {
 
     signingConfigs {
         create("release") {
-            // Konfigurasi dinamis: Baca dari GitHub Secrets jika ada
+            // Konfigurasi dinamis: Kunci keamanan dari GitHub Secrets
             val envKeystorePath = System.getenv("KEYSTORE_PATH")
             storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
             
@@ -60,10 +60,10 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         
-        // --- UPDATE VERSI DI SINI ---
-        versionCode = 70          // Naik dari 69
-        versionName = "4.6.4"     // Naik dari 4.6.3
-        // ----------------------------
+        // --- UPDATE VERSI v4.6.5 ---
+        versionCode = 71          // Naik dari 70
+        versionName = "4.6.5"     // Naik dari 4.6.4
+        // ---------------------------
 
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
