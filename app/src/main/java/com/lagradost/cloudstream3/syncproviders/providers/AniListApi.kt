@@ -37,7 +37,7 @@ class AniListApi : SyncAPI() {
     override var name = "AniList"
     override val idPrefix = "anilist"
 
-    // Kunci API AdiXtream
+    // Konfigurasi Client AdiXtream
     val key = "33370"
     private val secret = "H8Lt1PrYHLCWrpzQln4FremNk1JLvgJpbUyt8Nr1"
 
@@ -195,6 +195,51 @@ class AniListApi : SyncAPI() {
             newStatus.score,
             newStatus.watchedEpisodes
         )
+    }
+
+    private suspend fun getDataAboutId(auth : AuthData, id: Int): AniListTitleHolder? {
+        val q = """query (${'$'}id: Int = $id) {
+                Media (id: ${'$'}id, type: ANIME) {
+                    id
+                    episodes
+                    isFavourite
+                    mediaListEntry {
+                        progress
+                        status
+                        score (format: POINT_100)
+                    }
+                    title {
+                        english
+                        romaji
+                    }
+                }
+            }"""
+
+        val data = postApi(auth.token, q, true)
+        val d = parseJson<GetDataRoot>(data ?: return null)
+
+        val main = d.data?.media
+        return if (main?.mediaListEntry != null) {
+            AniListTitleHolder(
+                title = main.title,
+                id = id,
+                isFavourite = main.isFavourite,
+                progress = main.mediaListEntry.progress,
+                episodes = main.episodes,
+                score = main.mediaListEntry.score,
+                type = fromIntToAnimeStatus(aniListStatusString.indexOf(main.mediaListEntry.status)),
+            )
+        } else {
+            AniListTitleHolder(
+                title = main?.title,
+                id = id,
+                isFavourite = main?.isFavourite,
+                progress = 0,
+                episodes = main?.episodes,
+                score = 0,
+                type = AniListStatusType.None,
+            )
+        }
     }
 
     private suspend fun postDataAboutId(
