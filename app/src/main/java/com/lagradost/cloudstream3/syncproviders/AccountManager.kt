@@ -103,8 +103,6 @@ abstract class AccountManager {
             cachedAccountIds = ids
         }
 
-        // I do not want to place this in the init block as JVM initialization order is weird, and it may cause exceptions
-        // accessing other classes
         fun initMainAPI() {
             LoadResponse.malIdPrefix = malApi.idPrefix
             LoadResponse.aniListIdPrefix = aniListApi.idPrefix
@@ -123,15 +121,16 @@ abstract class AccountManager {
             SyncRepo(localListApi)
         )
 
-        const val APP_STRING = "cloudstreamapp"
-        const val APP_STRING_REPO = "cloudstreamrepo"
-        const val APP_STRING_PLAYER = "cloudstreamplayer"
+        [span_1](start_span)// Perubahan skema deep link untuk AdiXtream[span_1](end_span)
+        const val APP_STRING = "adixtream"
+        const val APP_STRING_REPO = "adixtreamrepo"
+        const val APP_STRING_PLAYER = "adixtreamplayer"
 
         // Instantly start the search given a query
-        const val APP_STRING_SEARCH = "cloudstreamsearch"
+        const val APP_STRING_SEARCH = "adixtreamsearch"
 
         // Instantly resume watching a show
-        const val APP_STRING_RESUME_WATCHING = "cloudstreamcontinuewatching"
+        const val APP_STRING_RESUME_WATCHING = "adixtreamcontinuewatching"
 
         const val APP_STRING_SHARE = "csshare"
 
@@ -151,7 +150,6 @@ abstract class AccountManager {
             if (minutes < 0) {
                 return completedValue
             }
-            //println("$days $hours $minutes")
             return "${if (days != 0L) "$days" + "d " else ""}${if (hours != 0L) "$hours" + "h " else ""}${minutes}m"
         }
     }
