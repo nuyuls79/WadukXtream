@@ -25,19 +25,19 @@
 
 ## 📖 Tentang AdiXtream
 
-**AdiXtream** adalah aplikasi streaming berbasis Android yang dimodifikasi khusus untuk kenyamanan pengguna Indonesia. Tujuan utama aplikasi ini adalah **kemudahan akses**.
+**AdiXtream** adalah aplikasi streaming berbasis Android yang dikembangkan khusus untuk memudahkan pengguna di Indonesia dalam mengakses konten favorit mereka. Fokus utama proyek ini adalah memberikan pengalaman **"Langsung Pakai"** bagi siapa saja.
 
-Tidak seperti aplikasi aslinya di mana pengguna harus mencari dan memasang repositori secara manual, **AdiXtream hadir dengan solusi "Siap Pakai".** Kami telah menanamkan repositori terbaik secara otomatis, menghapus peringatan yang mengganggu, dan menyederhanakan tampilan agar Anda bisa langsung menonton film favorit Anda segera setelah aplikasi terinstal.
+Kami memahami bahwa tidak semua pengguna memiliki waktu untuk melakukan konfigurasi manual. Oleh karena itu, AdiXtream hadir dengan konfigurasi repositori yang sudah terintegrasi secara otomatis dan antarmuka yang lebih sederhana. Dengan ini, Anda bisa langsung menikmati konten pilihan segera setelah aplikasi terpasang di perangkat Anda.
 
 ## ✨ Fitur Modifikasi (Pro)
 
-Versi ini telah dimodifikasi dari kode sumber aslinya (CloudStream) untuk pengalaman pengguna yang lebih instan:
+Versi ini merupakan hasil kustomisasi dari kode sumber **CloudStream** yang dioptimalkan agar lebih praktis:
 
-* ✅ **Repository Terintegrasi (Embedded):** Tidak perlu lagi mencari link repositori. Sumber tontonan (Provider) otomatis terinstal saat pertama kali buka.
-* ✅ **Auto-Setup:** Ekstensi otomatis siap digunakan tanpa konfigurasi manual.
-* ✅ **Bebas Gangguan:** Peringatan "Ekstensi Pihak Ketiga" yang mengganggu saat pembukaan aplikasi telah dihapus.
-* ✅ **Antarmuka Bersih:** Tombol pengaturan ekstensi yang rumit telah disembunyikan untuk mencegah kesalahan konfigurasi oleh pengguna awam.
-* ✅ **Bahasa Indonesia:** Prioritas sumber tontonan dengan subtitle dan konten Indonesia.
+* ✅ **Repository Terintegrasi:** Sumber tontonan (Provider) sudah tersedia secara bawaan tanpa perlu memasukkan link manual.
+* ✅ **Siap Pakai (Instant Setup):** Ekstensi otomatis aktif dan siap digunakan sejak pertama kali aplikasi dibuka.
+* ✅ **Navigasi Ringkas:** Antarmuka disesuaikan untuk meminimalkan langkah konfigurasi yang rumit, cocok untuk pengguna awam.
+* ✅ **Pengalaman Lancar:** Mengurangi dialog pesan sistem yang tidak diperlukan untuk mempercepat akses ke konten.
+* ✅ **Lokalisasi Indonesia:** Prioritas pada penyedia konten dengan dukungan Bahasa Indonesia dan subtitle yang relevan.
 
 ## 📺 Daftar Penyedia (Provider)
 
@@ -48,41 +48,39 @@ Aplikasi ini sudah dilengkapi dengan penyedia konten populer, antara lain:
 * **Idlix** (Streaming Film Populer)
 * **Adimoviebox**
 * **Lateri3Play**
-* *Dan banyak lagi...*
+* *Dan berbagai provider lainnya...*
 
 ## 📥 Cara Instalasi
 
-1.  Unduh file **APK** terbaru dari halaman [Releases](https://github.com/michat88/AdiXtream/releases).
-2.  Buka file yang diunduh pada perangkat Android Anda.
-3.  Jika diminta, izinkan instalasi dari **"Sumber Tidak Dikenal"** (Unknown Sources).
-4.  Buka aplikasi **AdiXtream**.
-5.  Tunggu sebentar untuk proses inisialisasi, dan selamat menonton!
+1.  Unduh file **APK** terbaru melalui halaman [Releases](https://github.com/michat88/AdiXtream/releases).
+2.  Buka file APK tersebut di perangkat Android Anda.
+3.  Berikan izin instalasi dari **"Sumber Tidak Dikenal"** jika diminta.
+4.  Jalankan aplikasi **AdiXtream**.
+5.  Tunggu proses inisialisasi sejenak, dan selamat menonton!
 
-## ☕ Traktir Kopi (Support)
+## ☕ Dukung Pengembang
 
-Jika Anda merasa aplikasi ini bermanfaat dan ingin mendukung saya untuk terus berkarya (beli kuota & kopi), silakan klik link di bawah ini:
+Jika aplikasi ini mempermudah hari-hari Anda dan Anda ingin mendukung pengembangan keberlanjutan proyek ini (seperti biaya server atau sekadar kopi), Anda bisa memberikan apresiasi melalui:
 
 🎁 **[Traktir saya via Saweria](https://saweria.co/michat88)**
 
-Dukungan Anda sangat berarti agar **AdiXtream** terus update! Terima kasih orang baik! 🙏
+Dukungan Anda sangat berarti bagi kelancaran update **AdiXtream**. Terima kasih banyak! 🙏
 
 ## ⚠️ Disclaimer
 
-**AdiXtream** tidak menghosting konten apa pun di servernya sendiri. Aplikasi ini bekerja sebagai mesin pencari (scraper) yang mengambil konten dari situs web pihak ketiga yang tersedia untuk umum di internet.
-
-Pengembang AdiXtream tidak bertanggung jawab atas konten yang ditampilkan oleh penyedia pihak ketiga. Gunakan aplikasi ini dengan bijak.
+**AdiXtream** tidak menyimpan atau menghosting konten video apa pun. Aplikasi ini berfungsi sebagai alat bantu pencarian (scraper) yang mengindeks konten dari situs web publik di internet. Tanggung jawab atas konten berada sepenuhnya pada penyedia pihak ketiga tersebut. Mohon gunakan aplikasi ini dengan bijak.
 
 ---
 
-## ❤️ Kredit & Ucapan Terima Kasih (Special Thanks)
+## ❤️ Kredit & Apresiasi (Special Thanks)
 
-Proyek **AdiXtream** ini sepenuhnya didasarkan pada proyek open-source yang luar biasa, **CloudStream**.
+Proyek **AdiXtream** tidak akan pernah ada tanpa kontribusi luar biasa dari komunitas open-source.
 
-Terima kasih yang sebesar-besarnya kami ucapkan kepada **Tim Pengembang CloudStream** dan seluruh kontributornya. **AdiXtream hanyalah sebuah modifikasi kecil yang dibangun di atas pondasi kokoh karya mereka.** Segala kecanggihan sistem di aplikasi ini adalah hasil jerih payah mereka.
+Kami memberikan rasa hormat dan terima kasih setinggi-tingginya kepada **Tim Pengembang CloudStream**. **AdiXtream hanyalah sebuah modifikasi kecil yang dibangun di atas pondasi kokoh yang mereka ciptakan.** Segala fitur utama dan kecanggihan sistem di aplikasi ini adalah hasil kerja keras mereka.
 
-Kami sangat menghormati karya asli developer CloudStream. Modifikasi ini dibuat semata-mata untuk mempermudah konfigurasi bagi pengguna awam di Indonesia, tanpa bermaksud mengambil alih kredit atas kerja keras mereka.
+Modifikasi ini dibuat semata-mata untuk membantu pengguna di Indonesia yang membutuhkan kemudahan konfigurasi, tanpa mengurangi rasa hormat kami pada proyek aslinya.
 
-Tolong dukung proyek asli mereka di sini:
+Dukung dan kunjungi proyek asli mereka di:
 * 🔗 **[CloudStream Official Repository](https://github.com/recloudstream/cloudstream)**
 
 ---
