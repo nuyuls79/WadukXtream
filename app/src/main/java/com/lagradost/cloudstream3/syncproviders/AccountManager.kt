@@ -16,7 +16,19 @@ import java.util.concurrent.TimeUnit
 
 abstract class AccountManager {
     companion object {
+        // --- Bagian Konfigurasi AdiXtream ---
+        const val APP_STRING = "adixtream"
+        const val APP_STRING_REPO = "adixtreamrepo"
+        const val APP_STRING_PLAYER = "adixtreamplayer"
+        const val APP_STRING_SEARCH = "adixtreamsearch"
+        const val APP_STRING_RESUME_WATCHING = "adixtreamcontinuewatching"
+        const val APP_STRING_SHARE = "csshare"
+        
+        const val ACCOUNT_TOKEN = "auth_tokens"
+        const val ACCOUNT_IDS = "auth_ids"
         const val NONE_ID: Int = -1
+        // ------------------------------------
+
         val malApi = MALApi()
         val aniListApi = AniListApi()
         val simklApi = SimklApi()
@@ -27,11 +39,8 @@ abstract class AccountManager {
         val subDlApi = SubDlApi()
         val subSourceApi = SubSourceApi()
 
-        var cachedAccounts: MutableMap<String, Array<AuthData>>
-        var cachedAccountIds: MutableMap<String, Int>
-
-        const val ACCOUNT_TOKEN = "auth_tokens"
-        const val ACCOUNT_IDS = "auth_ids"
+        var cachedAccounts: MutableMap<String, Array<AuthData>> = mutableMapOf()
+        var cachedAccountIds: MutableMap<String, Int> = mutableMapOf()
 
         fun accounts(prefix: String): Array<AuthData> {
             require(prefix != "NONE")
@@ -62,7 +71,6 @@ abstract class AccountManager {
             SyncRepo(aniListApi),
             SyncRepo(simklApi),
             SyncRepo(localListApi),
-
             SubtitleRepo(openSubtitlesApi),
             SubtitleRepo(addic7ed),
             SubtitleRepo(subDlApi)
@@ -114,6 +122,7 @@ abstract class AccountManager {
             SubtitleRepo(addic7ed),
             SubtitleRepo(subDlApi)
         )
+        
         val syncApis = arrayOf(
             SyncRepo(malApi),
             SyncRepo(aniListApi),
@@ -121,36 +130,20 @@ abstract class AccountManager {
             SyncRepo(localListApi)
         )
 
-        [span_1](start_span)// Perubahan skema deep link untuk AdiXtream[span_1](end_span)
-        const val APP_STRING = "adixtream"
-        const val APP_STRING_REPO = "adixtreamrepo"
-        const val APP_STRING_PLAYER = "adixtreamplayer"
-
-        // Instantly start the search given a query
-        const val APP_STRING_SEARCH = "adixtreamsearch"
-
-        // Instantly resume watching a show
-        const val APP_STRING_RESUME_WATCHING = "adixtreamcontinuewatching"
-
-        const val APP_STRING_SHARE = "csshare"
-
         fun secondsToReadable(seconds: Int, completedValue: String): String {
             var secondsLong = seconds.toLong()
-            val days = TimeUnit.SECONDS
-                .toDays(secondsLong)
+            val days = TimeUnit.SECONDS.toDays(secondsLong)
             secondsLong -= TimeUnit.DAYS.toSeconds(days)
 
-            val hours = TimeUnit.SECONDS
-                .toHours(secondsLong)
+            val hours = TimeUnit.SECONDS.toHours(secondsLong)
             secondsLong -= TimeUnit.HOURS.toSeconds(hours)
 
-            val minutes = TimeUnit.SECONDS
-                .toMinutes(secondsLong)
-            secondsLong -= TimeUnit.MINUTES.toSeconds(minutes)
-            if (minutes < 0) {
-                return completedValue
-            }
-            return "${if (days != 0L) "$days" + "d " else ""}${if (hours != 0L) "$hours" + "h " else ""}${minutes}m"
+            val minutes = TimeUnit.SECONDS.toMinutes(secondsLong)
+            if (minutes < 0) return completedValue
+            
+            val dStr = if (days != 0L) "${days}d " else ""
+            val hStr = if (hours != 0L) "${hours}h " else ""
+            return "$dStr$hStr${minutes}m"
         }
     }
 }
