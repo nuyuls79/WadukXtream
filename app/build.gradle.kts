@@ -46,6 +46,7 @@ android {
             val envKeystorePath = System.getenv("KEYSTORE_PATH")
             storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
             
+            // Pengaturan keystore AdiXtream
             storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
             keyAlias = System.getenv("ALIAS") ?: "adixtream"
             keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
@@ -55,7 +56,7 @@ android {
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        // Identitas aplikasi AdiXtream
+        // Identitas aplikasi AdiXtream agar tidak bentrok dengan Cloudstream asli
         applicationId = "com.adixtream.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
@@ -75,7 +76,7 @@ android {
         buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
         
-        // Kunci API Simkl resmi milik AdiXtream
+        // API Keys Simkl milik AdiXtream
         buildConfigField("String", "SIMKL_CLIENT_ID", "\"db13c9a72e036f717c3a85b13cdeb31fa884c8f4991e43695f7b6477374e35b8\"")
         buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"d8cf8e1b79bae9b2f77f0347d6384a62f1a8d802abdd73d9aa52bf6a848532ba\"")
         
