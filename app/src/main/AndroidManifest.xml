@@ -2,31 +2,31 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    [span_1](start_span)<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />[span_1](end_span)
-    [span_2](start_span)<uses-permission android:name="android.permission.INTERNET" />[span_2](end_span)
-    [span_3](start_span)<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />[span_3](end_span)
-    [span_4](start_span)<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />[span_4](end_span)
-    [span_5](start_span)<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />[span_5](end_span)
-    [span_6](start_span)<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />[span_6](end_span)
-    [span_7](start_span)<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />[span_7](end_span)
-    [span_8](start_span)<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />[span_8](end_span)
-    [span_9](start_span)<uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />[span_9](end_span)
-    [span_10](start_span)<uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />[span_10](end_span)
-    [span_11](start_span)<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />[span_11](end_span)
-    [span_12](start_span)<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />[span_12](end_span)
-    [span_13](start_span)<uses-permission android:name="android.permission.USE_BIOMETRIC" />[span_13](end_span)
-    [span_14](start_span)<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />[span_14](end_span)
-    [span_15](start_span)<uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA" />[span_15](end_span)
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA" />
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
-        [span_16](start_span)tools:ignore="QueryAllPackagesPermission" />[span_16](end_span)
+        tools:ignore="QueryAllPackagesPermission" />
 
     <uses-feature
         android:name="android.hardware.touchscreen"
-        [span_17](start_span)android:required="false" />[span_17](end_span)
+        android:required="false" />
     <uses-feature
         android:name="android.software.leanback"
-        [span_18](start_span)android:required="false" />[span_18](end_span)
+        android:required="false" />
 
     <application
         android:name=".CloudStreamApp"
@@ -39,19 +39,18 @@
         android:roundIcon="@drawable/app_icon"
         android:label="@string/app_name"
         android:largeHeap="true"
-        android:pageSizeCompat="enabled"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
-        [span_19](start_span)tools:targetApi="${target_sdk_version}">[span_19](end_span)
+        tools:targetApi="34">
 
         <meta-data
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-            [span_20](start_span)android:value="com.lagradost.cloudstream3.utils.CastOptionsProvider" />[span_20](end_span)
+            android:value="com.lagradost.cloudstream3.utils.CastOptionsProvider" />
 
         <profileable
             android:shell="true"
-            [span_21](start_span)tools:targetApi="q" />[span_21](end_span)
+            tools:targetApi="q" />
 
         <activity
             android:name=".ui.player.DownloadedPlayerActivity"
@@ -62,19 +61,19 @@
             android:supportsPictureInPicture="true"
             android:taskAffinity="com.lagradost.cloudstream3.downloadedplayer"
             android:launchMode="singleTask"
-            [span_22](start_span)tools:ignore="DiscouragedApi">[span_22](end_span)
+            tools:ignore="DiscouragedApi">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="content" />
                 <data android:mimeType="video/*" />
-            [span_23](start_span)</intent-filter>[span_23](end_span)
+            </intent-filter>
 
             <intent-filter android:label="@string/play_with_app_name">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
-            [span_24](start_span)</intent-filter>[span_24](end_span)
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.SEND" />
@@ -82,7 +81,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="magnet" />
-            [span_25](start_span)</intent-filter>[span_25](end_span)
+            </intent-filter>
         </activity>
 
         <activity
@@ -91,7 +90,7 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
-            [span_26](start_span)android:supportsPictureInPicture="true">[span_26](end_span)
+            android:supportsPictureInPicture="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -99,108 +98,95 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="adixtream" android:host="mallogin" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="adixtreamplayer" />
-            [span_27](start_span)</intent-filter>[span_27](end_span)
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="adixtream" />
-            [span_28](start_span)</intent-filter>[span_28](end_span)
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="adixtreamrepo" />
-            [span_29](start_span)</intent-filter>[span_29](end_span)
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="csshare" />
-            [span_30](start_span)</intent-filter>[span_30](end_span)
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="adixtreamsearch" />
-            [span_31](start_span)</intent-filter>[span_31](end_span)
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="adixtreamcontinuewatching" />
-            [span_32](start_span)</intent-filter>[span_32](end_span)
-
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:host="cs.repo"
-                    android:pathPrefix="/"
-                    android:scheme="https" />
-            [span_33](start_span)</intent-filter>[span_33](end_span)
+                <data android:host="cs.repo" android:pathPrefix="/" android:scheme="https" />
+            </intent-filter>
         </activity>
 
         <activity
             android:name=".ui.account.AccountSelectActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden"
-            [span_34](start_span)android:exported="true">[span_34](end_span)
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-            [span_35](start_span)</intent-filter>[span_35](end_span)
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
-            [span_36](start_span)</intent-filter>[span_36](end_span)
+            </intent-filter>
         </activity>
 
         <receiver
             android:name=".receivers.VideoDownloadRestartReceiver"
             android:enabled="false"
-            [span_37](start_span)android:exported="false">[span_37](end_span)
+            android:exported="false">
             <intent-filter>
                 <action android:name="restart_service" />
-            [span_38](start_span)</intent-filter>[span_38](end_span)
+            </intent-filter>
         </receiver>
 
         <service
             android:name=".services.VideoDownloadService"
             android:enabled="true"
             android:foregroundServiceType="dataSync"
-            [span_39](start_span)android:exported="false" />[span_39](end_span)
+            android:exported="false" />
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync"
-            [span_40](start_span)tools:node="merge" />[span_40](end_span)
+            tools:node="merge" />
 
-        <activity
-            android:name=".ui.ControllerActivity"
-            [span_41](start_span)android:exported="false" />[span_41](end_span)
+        <activity android:name=".ui.ControllerActivity" android:exported="false" />
 
         <service
             android:name=".services.PackageInstallerService"
             android:foregroundServiceType="dataSync"
-            [span_42](start_span)android:exported="false" />[span_42](end_span)
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:enabled="true"
             android:exported="false"
-            [span_43](start_span)android:grantUriPermissions="true">[span_43](end_span)
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                [span_44](start_span)android:resource="@xml/provider_paths" />[span_44](end_span)
+                android:resource="@xml/provider_paths" />
         </provider>
     </application>
 </manifest>
