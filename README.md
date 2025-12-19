@@ -58,13 +58,28 @@ Aplikasi ini sudah dilengkapi dengan penyedia konten populer, antara lain:
 4.  Jalankan aplikasi **AdiXtream**.
 5.  Tunggu proses inisialisasi sejenak, dan selamat menonton!
 
+## 🔥 Mode Aduh Ma Aduh Pa (NSFW)
+
+Bagi Anda yang membutuhkan konten ekstra, fitur NSFW sudah tersedia dan dapat diaktifkan dengan langkah berikut:
+
+1.  **Menu Penyedia:** Buka Pengaturan > Penyedia, lalu aktifkan tombol **"Mengaktifkan NSFW pada Ekstensi yang didukung"**.
+2.  **Pilihan Media:** Klik menu **"Media yang lebih diinginkan"** dan pastikan opsi **NSFW** sudah dicentang.
+3.  **Filter Beranda:** Kembali ke halaman utama, lalu aktifkan filter **NSFW** di barisan kategori bawah agar konten muncul.
+
+## 🛡️ Jalur Aman (Anti-Blokir ISP)
+
+Agar akses tontonan Anda (terutama pada Mode Aduh Ma Aduh Pa) tidak terganggu oleh pemblokiran provider internet, kami sangat menyarankan untuk mengaktifkan fitur DNS:
+
+* Pergi ke **Pengaturan > Umum**.
+* Aktifkan fitur **DNS over HTTPS**. Fitur ini sangat berguna untuk melewati blokir ISP dan menjaga koneksi tetap stabil saat melakukan *scraping* konten.
+
 ## ☕ Dukung Pengembang
 
 Jika aplikasi ini mempermudah hari-hari Anda dan Anda ingin mendukung pengembangan keberlanjutan proyek ini (seperti biaya server atau sekadar kopi), Anda bisa memberikan apresiasi melalui:
 
 🎁 **[Traktir saya via Saweria](https://saweria.co/michat88)**
 
-Dukungan Anda sangat berarti bagi kelancaran update **AdiXtream**. Terima kasih banyak! 🙏
+Selain via Saweria, Anda juga bisa memberikan dukungan langsung di dalam aplikasi melalui menu **"Berikan sebuah pisang kepada developer"** yang terletak di bagian pengaturan umum. Dukungan Anda sangat berarti bagi kelancaran update **AdiXtream**. Terima kasih banyak! 🙏
 
 ## ⚠️ Disclaimer
 
@@ -76,7 +91,7 @@ Dukungan Anda sangat berarti bagi kelancaran update **AdiXtream**. Terima kasih 
 
 Proyek **AdiXtream** tidak akan pernah ada tanpa kontribusi luar biasa dari komunitas open-source.
 
-Kami memberikan rasa hormat dan terima kasih setinggi-tingginya kepada **Tim Pengembang CloudStream**. **AdiXtream hanyalah sebuah modifikasi kecil yang dibangun di atas pondasi kokoh yang mereka ciptakan.** Segala fitur utama dan kecanggihan sistem di aplikasi ini adalah hasil kerja keras mereka.
+Kami memberikan rasa hormat dan terima kasih setinggi-tingginya kepada **Tim Pengembang CloudStream**. **AdiXtream hanyalah sebuah modifikasi kecil yang dibangun di atas pondasi kokoh yang mereka ciptakan.** Segala fitur utama dan kecanggihan sistem di aplikasi ini adalah hasil jerih payah mereka.
 
 Modifikasi ini dibuat semata-mata untuk membantu pengguna di Indonesia yang membutuhkan kemudahan konfigurasi, tanpa mengurangi rasa hormat kami pada proyek aslinya.
 
