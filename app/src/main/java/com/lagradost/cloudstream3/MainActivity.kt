@@ -200,6 +200,7 @@ import com.lagradost.cloudstream3.utils.TvChannelUtils
 // --- IMPORT TAMBAHAN (PENTING) ---
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
+import com.lagradost.cloudstream3.ui.settings.extensions.AutoDownloadMode
 // -----------------------
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
@@ -1280,10 +1281,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             )
         }
 
-        // --- KODE MODIFIKASI: AUTO REPO & ONE-TIME DOWNLOAD (FIXED) ---
+        // --- KODE MODIFIKASI: AUTO REPO & ONE-TIME DOWNLOAD (FIXED V2) ---
         ioSafe {
-            // Key unik untuk menandai bahwa setup sudah selesai
-            val uniqueSetupKey = "MY_APP_INITIAL_SETUP_DONE_V1"
+            // Ubah ke V2 agar kode ini jalan lagi di HP kamu untuk menerapkan fix settings
+            val uniqueSetupKey = "MY_APP_INITIAL_SETUP_DONE_V2"
             
             // Cek apakah setup sudah pernah dilakukan?
             val isAlreadySetup = getKey(uniqueSetupKey, false) == true
@@ -1311,8 +1312,15 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                         }
                     }
 
-                    // D. SETTING TAMBAHAN: MATIKAN AUTO UPDATE
+                    // D. SETTINGS: MATIKAN UPDATE & DOWNLOAD OTOMATIS
+                    // Supaya plugin tidak terdownload otomatis lagi saat buka menu ekstensi
+                    
+                    // 1. Matikan Auto Update Plugin
                     setKey(getString(R.string.auto_update_plugins_key), false)
+                    
+                    // 2. Matikan Auto Download Plugin Baru (Solusi masalah "Terunduh 2 plugins")
+                    // Nilai 0 = Disabled (Jangan pernah download otomatis lagi)
+                    setKey(getString(R.string.auto_download_plugins_key), 0)
 
                     // E. TANDAI BAHWA SETUP SUDAH SELESAI
                     setKey(uniqueSetupKey, true)
