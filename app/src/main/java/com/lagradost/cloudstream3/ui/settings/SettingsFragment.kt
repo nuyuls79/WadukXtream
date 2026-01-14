@@ -43,14 +43,14 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-// --- IMPORT TAMBAHAN UNTUK PEWARNAAN TEKS ---
+// --- IMPORT TAMBAHAN ---
 import android.graphics.Color
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
-// --------------------------------------------
+// -----------------------
 
 class SettingsFragment : BaseFragment<MainSettingsBinding>(
     BaseFragment.BindingCreator.Inflate(MainSettingsBinding::inflate)
@@ -200,27 +200,26 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         }
 
         binding.apply {
-            // 1. DAFTAR MENU UTAMA (EKSTENSI ADA DI SINI)
-            listOf(
-                settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
-                settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
-                settingsCredits to R.id.action_navigation_global_to_navigation_settings_account,
-                settingsUi to R.id.action_navigation_global_to_navigation_settings_ui,
-                settingsProviders to R.id.action_navigation_global_to_navigation_settings_providers,
-                settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
-                // Tombol Extensions diaktifkan dan dimasukkan ke dalam list
-                settingsExtensions to R.id.action_navigation_global_to_navigation_settings_extensions, 
-            ).forEach { (view, navigationId) ->
-                view.apply {
-                    setOnClickListener { navigate(navigationId) }
-                    if (isLayout(TV)) {
-                        isFocusable = true
-                        isFocusableInTouchMode = true
-                    }
+            
+            // --- 1. MODIFIKASI: BYPASS MASUK LANGSUNG KE PLUGINS ---
+            settingsExtensions.setOnClickListener {
+                try {
+                    val bundle = Bundle()
+                    // Nama yang akan muncul di header toolbar
+                    bundle.putString("name", "AdiManuLateri3") 
+                    // URL Repository kamu (WAJIB SAMA PERSIS DENGAN MAIN ACTIVITY)
+                    bundle.putString("url", "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json") 
+                    bundle.putBoolean("isLocal", false)
+                    
+                    // Navigasi langsung ke PluginsFragment, melewati ExtensionsFragment
+                    activity?.navigate(R.id.navigation_settings_plugins, bundle)
+                } catch (e: Exception) {
+                    logError(e)
                 }
             }
+            // --------------------------------------------------------
 
-            // 2. LOGIKA TOMBOL TENTANG (DIPINDAHKAN KE BAWAH)
+            // --- 2. LOGIKA TOMBOL TENTANG (WARNA MERAH PUTIH) ---
             settingsAbout.setOnClickListener {
                 val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
                 builder.setTitle("Tentang AdiXtream")
@@ -264,6 +263,24 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
             }
             // --------------------------------------------------
 
+            // --- 3. DAFTAR MENU LAINNYA ---
+            // Catatan: 'settingsExtensions' DIHAPUS dari list ini agar tidak bentrok dengan logika khusus di atas
+            listOf(
+                settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
+                settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
+                settingsCredits to R.id.action_navigation_global_to_navigation_settings_account,
+                settingsUi to R.id.action_navigation_global_to_navigation_settings_ui,
+                settingsProviders to R.id.action_navigation_global_to_navigation_settings_providers,
+                settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
+            ).forEach { (view, navigationId) ->
+                view.apply {
+                    setOnClickListener { navigate(navigationId) }
+                    if (isLayout(TV)) {
+                        isFocusable = true
+                        isFocusableInTouchMode = true
+                    }
+                }
+            }
             if (isLayout(TV)) {
                 settingsGeneral.requestFocus()
             }
