@@ -1283,7 +1283,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
         // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (AUTO UPDATE V4) ---
 
-        val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
+        val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/builds/repo.json"
         
         // BAGIAN 1: Auto Load Repository (HANYA SEKALI SAAT PERTAMA KALI / DATA DIHAPUS)
         ioSafe {
