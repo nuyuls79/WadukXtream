@@ -200,8 +200,8 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         }
 
         binding.apply {
-            // PERBAIKAN 1: Baris ini dihapus agar Ekstensi terlihat
-            // settingsExtensions.visibility = View.GONE 
+            // PERUBAHAN: Baris ini dihapus agar tombol Extension terlihat
+            // settingsExtensions.visibility = View.GONE
 
             // --- LOGIKA TOMBOL TENTANG (WARNA MERAH PUTIH) ---
             settingsAbout.setOnClickListener {
@@ -254,13 +254,13 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
 
             listOf(
                 settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
-                // PERBAIKAN 2: Menambahkan navigasi Ekstensi kembali
-                settingsExtensions to R.id.action_navigation_global_to_navigation_settings_extensions,
                 settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
                 settingsCredits to R.id.action_navigation_global_to_navigation_settings_account,
                 settingsUi to R.id.action_navigation_global_to_navigation_settings_ui,
                 settingsProviders to R.id.action_navigation_global_to_navigation_settings_providers,
                 settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
+                // PERUBAHAN: Menambahkan kembali navigasi untuk tombol extensions
+                settingsExtensions to R.id.action_navigation_global_to_navigation_settings_extensions, 
             ).forEach { (view, navigationId) ->
                 view.apply {
                     setOnClickListener { navigate(navigationId) }
