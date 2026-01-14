@@ -197,10 +197,9 @@ import android.content.ContentUris
 import com.lagradost.cloudstream3.ui.home.HomeFragment
 import com.lagradost.cloudstream3.utils.TvChannelUtils
 
-// --- IMPORT TAMBAHAN (PENTING) ---
+// --- IMPORT TAMBAHAN ---
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
-import com.lagradost.cloudstream3.ui.settings.extensions.AutoDownloadMode // <--- INI YG BIKIN ERROR KEMARIN
 // -----------------------
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
@@ -436,6 +435,160 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
+
+
+    var lastPopup: SearchResponse? = null
+    fun loadPopup(result: SearchResponse, load: Boolean = true) {
+        lastPopup = result
+        val syncName = syncViewModel.syncName(result.apiName)
+
+        // based on apiName we decide on if it is a local list or not, this is because
+        // we want to show a bit of extra UI to sync apis
+        if (result is SyncAPI.LibraryItem && syncName != null) {
+            isLocalList = false
+            syncViewModel.setSync(syncName, result.syncId)
+            syncViewModel.updateMetaAndUser()
+        } else {
+            isLocalList = true
+            syncViewModel.clear()
+        }
+
+        if (load) {
+            viewModel.load(
+                this, result.url, result.apiName, false, if (getApiDubstatusSettings()
+                        .contains(DubStatus.Dubbed)
+                ) DubStatus.Dubbed else DubStatus.Subbed, null
+            )
+        } else {
+            viewModel.loadSmall(result)
+        }
+    }
+
+    override fun onColorSelected(dialogId: Int, color: Int) {
+        onColorSelectedEvent.invoke(Pair(dialogId, color))
+    }
+
+    override fun onDialogDismissed(dialogId: Int) {
+        onDialogDismissedEvent.invoke(dialogId)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        updateLocale() // android fucks me by chaining lang when rotating the phone
+        updateTheme(this) // Update if system theme
+
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navHostFragment.navController.currentDestination?.let { updateNavBar(it) }
+    }
+
+    private fun updateNavBar(destination: NavDestination) {
+        this.hideKeyboard()
+
+        // Fucks up anime info layout since that has its own layout
+        binding?.castMiniControllerHolder?.isVisible =
+            !listOf(
+                R.id.navigation_results_phone,
+                R.id.navigation_results_tv,
+                R.id.navigation_player
+            ).contains(destination.id)
+
+        val isNavVisible = listOf(
+            R.id.navigation_home,
+            R.id.navigation_search,
+            R.id.navigation_library,
+            R.id.navigation_downloads,
+            R.id.navigation_settings,
+            R.id.navigation_download_child,
+            R.id.navigation_subtitles,
+            R.id.navigation_chrome_subtitles,
+            R.id.navigation_settings_player,
+            R.id.navigation_settings_updates,
+            R.id.navigation_settings_ui,
+            R.id.navigation_settings_account,
+            R.id.navigation_settings_providers,
+            R.id.navigation_settings_general,
+            R.id.navigation_settings_extensions,
+            R.id.navigation_settings_plugins,
+            R.id.navigation_test_providers,
+        ).contains(destination.id)
+
+
+        /*val dontPush = listOf(
+            R.id.navigation_home,
+            R.id.navigation_search,
+            R.id.navigation_results_phone,
+            R.id.navigation_results_tv,
+            R.id.navigation_player,
+            R.id.navigation_quick_search,
+        ).contains(destination.id)
+
+        binding?.navHostFragment?.apply {
+            val params = layoutParams as ConstraintLayout.LayoutParams
+            val push =
+                if (!dontPush && isLayout(TV or EMULATOR)) resources.getDimensionPixelSize(R.dimen.navbar_width) else 0
+
+            if (!this.isLtr()) {
+                params.setMargins(
+                    params.leftMargin,
+                    params.topMargin,
+                    push,
+                    params.bottomMargin
+                )
+            } else {
+                params.setMargins(
+                    push,
+                    params.topMargin,
+                    params.rightMargin,
+                    params.bottomMargin
+                )
+            }
+
+            layoutParams = params
+        }*/
+
+        binding?.apply {
+            navRailView.isVisible = isNavVisible && isLandscape()
+            navView.isVisible = isNavVisible && !isLandscape()
+            navHostFragment.apply {
+                val marginPx = resources.getDimensionPixelSize(R.dimen.nav_rail_view_width)
+                layoutParams = (navHostFragment.layoutParams as ViewGroup.MarginLayoutParams).apply {
+                    marginStart = if (isNavVisible && isLandscape() && isLayout(TV or EMULATOR)) marginPx else 0
+                }
+            }
+
+            /**
+             * We need to make sure if we return to a sub-fragment,
+             * the correct navigation item is selected so that it does not
+             * highlight the wrong one in UI.
+             */
+            when (destination.id) {
+                in listOf(R.id.navigation_downloads, R.id.navigation_download_child) -> {
+                    navRailView.menu.findItem(R.id.navigation_downloads).isChecked = true
+                    navView.menu.findItem(R.id.navigation_downloads).isChecked = true
+                }
+
+                in listOf(
+                    R.id.navigation_settings,
+                    R.id.navigation_subtitles,
+                    R.id.navigation_chrome_subtitles,
+                    R.id.navigation_settings_player,
+                    R.id.navigation_settings_updates,
+                    R.id.navigation_settings_ui,
+                    R.id.navigation_settings_account,
+                    R.id.navigation_settings_providers,
+                    R.id.navigation_settings_general,
+                    R.id.navigation_settings_extensions,
+                    R.id.navigation_settings_plugins,
+                    R.id.navigation_test_providers
+                ) -> {
+                    navRailView.menu.findItem(R.id.navigation_settings).isChecked = true
+                    navView.menu.findItem(R.id.navigation_settings).isChecked = true
+                }
+            }
+        }
+    }
+
     //private var mCastSession: CastSession? = null
     var mSessionManager: SessionManager? = null
     private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
@@ -1128,50 +1281,39 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             )
         }
 
-        // --- KODE MODIFIKASI: AUTO REPO & ONE-TIME DOWNLOAD (FIXED V2) ---
+        // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (FINAL FIX V3) ---
+        
+        // 1. Auto Load Repository (DIAM-DIAM + AUTO INSTALL + FIX TYPE MISMATCH)
         ioSafe {
-            // Ubah ke V2 agar kode ini jalan lagi di HP kamu untuk menerapkan fix settings
-            val uniqueSetupKey = "MY_APP_INITIAL_SETUP_DONE_V2"
-            
-            // Cek apakah setup sudah pernah dilakukan?
-            val isAlreadySetup = getKey(uniqueSetupKey, false) == true
-
-            if (!isAlreadySetup) {
+            val repoAddedKey = "HAS_ADDED_MY_REPO_V3" // Key versi baru
+            if (getKey(repoAddedKey, false) != true) {
                 try {
                     val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
                     
-                    // A. Parse repository
+                    // A. Parse repository 
                     val parsedRepo = RepositoryManager.parseRepository(customRepoUrl)
                     
                     if (parsedRepo != null) {
-                        // B. Masukkan Repo secara Manual
+                        // B. KONVERSI KE REPOSITORY DATA (PERBAIKAN ERROR GRADLE)
+                        // Membuat object RepositoryData secara manual
                         val finalRepoData = com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData(
                             parsedRepo.iconUrl,
                             parsedRepo.name,
                             customRepoUrl
                         )
+
+                        // C. Masukkan ke sistem tanpa permisi (Silent Add)
                         RepositoryManager.addRepository(finalRepoData)
+                        
+                        // D. Tandai sudah selesai
+                        setKey(repoAddedKey, true) 
                         Log.i(TAG, "Silent-loaded custom repository: $customRepoUrl")
 
-                        // C. LANGSUNG DOWNLOAD SEMUA PLUGIN (Hanya Sekali Ini Saja)
+                        // E. LANGSUNG TRIGGER DOWNLOAD PLUGIN OTOMATIS
                         main {
                             PluginsViewModel.downloadAll(this@MainActivity, customRepoUrl, null)
                         }
                     }
-
-                    // D. SETTINGS: MATIKAN UPDATE & DOWNLOAD OTOMATIS
-                    // Supaya plugin tidak terdownload otomatis lagi saat buka menu ekstensi
-                    
-                    // 1. Matikan Auto Update Plugin
-                    setKey(getString(R.string.auto_update_plugins_key), false)
-                    
-                    // 2. Matikan Auto Download Plugin Baru (Solusi masalah "Terunduh 2 plugins")
-                    // Nilai 0 = Disabled (Jangan pernah download otomatis lagi)
-                    setKey(getString(R.string.auto_download_plugins_key), 0)
-
-                    // E. TANDAI BAHWA SETUP SUDAH SELESAI
-                    setKey(uniqueSetupKey, true)
-
                 } catch (e: Exception) {
                     logError(e)
                 }
@@ -1366,6 +1508,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         observe(viewModel.watchStatus, ::setWatchStatus)
         observe(syncViewModel.userData, ::setUserData)
         observeNullable(viewModel.subscribeStatus, ::setSubscribeStatus)
+
         observeNullable(viewModel.page) { resource ->
             if (resource == null) {
                 hidePreviewPopupDialog()
@@ -1905,15 +2048,25 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
 
-        // --- BYPASS SETUP DI AKHIR (SAFETY NET) ---
-        // Jika karena alasan tertentu setup belum ditandai selesai, kita tandai di sini
-        // dan pastikan tidak ada navigasi ke SetupFragmentExtensions
+        // --- INI BAGIAN PENTING UNTUK BYPASS SETUP ---
+        // Jika kunci setup belum ada, kita buat TRUE dan JANGAN NAVIGASI KE SETUP LANGUAGE
         try {
             if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
                 setKey(HAS_DONE_SETUP_KEY, true)
                 // Kita tidak memanggil navController.navigate(...)
                 // Jadi aplikasi akan tetap di HomeFragment
             } 
+            // Bagian ini biasanya mengarahkan ke setup extensions jika kosong, 
+            // tapi karena kita sudah load repo di atas, user akan baik-baik saja.
+            else if (PluginManager.getPluginsOnline().isEmpty()
+                && PluginManager.getPluginsLocal().isEmpty()
+            ) {
+                 // Opsional: Jika masih mau menampilkan halaman extensions jika kosong
+                 /* navController.navigate(
+                    R.id.navigation_setup_extensions,
+                    SetupFragmentExtensions.newInstance(false)
+                ) */
+            }
         } catch (e: Exception) {
             logError(e)
         }
