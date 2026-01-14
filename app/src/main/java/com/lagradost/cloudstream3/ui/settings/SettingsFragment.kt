@@ -10,6 +10,7 @@ import androidx.annotation.StringRes
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.material.appbar.AppBarLayout
@@ -200,7 +201,33 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         }
 
         binding.apply {
-            settingsExtensions.visibility = View.GONE
+            // ====================================================================
+            // MODIFIKASI ADIXTREAM: TOMBOL EKSTENSI (LANGSUNG KE REPO)
+            // ====================================================================
+            
+            // 1. Pastikan tombol terlihat (hapus GONE yang lama)
+            settingsExtensions.visibility = View.VISIBLE
+            
+            // 2. Logika Navigasi Langsung ke Repo "AdiManuLateri3Play"
+            settingsExtensions.setOnClickListener {
+                try {
+                    // Membuat Bundle data sesuai yang dibutuhkan PluginFragment
+                    val bundle = Bundle()
+                    bundle.putString("name", "AdiManuLateri3Play") // Judul Halaman
+                    bundle.putString("url", "https://bit.ly/adimanu") // URL Repo (Wajib sama)
+                    bundle.putBoolean("isLocal", false) // Bukan file lokal
+
+                    // Navigasi menggunakan ID global action yang ada di mobile_navigation.xml
+                    findNavController().navigate(
+                        R.id.global_to_navigation_settings_plugins, 
+                        bundle
+                    )
+                } catch (e: Exception) {
+                    Log.e("AdiXtream", "Gagal membuka repo langsung: ${e.message}")
+                    e.printStackTrace()
+                }
+            }
+            // ====================================================================
 
             // --- LOGIKA TOMBOL TENTANG (WARNA MERAH PUTIH) ---
             settingsAbout.setOnClickListener {
