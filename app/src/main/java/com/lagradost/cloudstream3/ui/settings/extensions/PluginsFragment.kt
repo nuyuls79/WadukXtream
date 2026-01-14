@@ -36,8 +36,8 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
 
     private val pluginViewModel: PluginsViewModel by activityViewModels()
     
-    // Variabel baru untuk memastikan auto-install hanya jalan sekali saat dibuka
-    private var hasAutoInstalled = true 
+    // Variabel ini tidak lagi diperlukan karena logika auto-install dihapus
+    // private var hasAutoInstalled = false 
 
     override fun onDestroyView() {
         pluginViewModel.clear() // clear for the next observe
@@ -54,8 +54,7 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
         pluginViewModel.selectedLanguages = listOf()
         pluginViewModel.clear()
         
-        // Reset state auto install setiap kali fragment dibuat
-        hasAutoInstalled = false 
+        // hasAutoInstalled = false // Dihapus
 
         // Filter by language set on preferred media
         activity?.let {
@@ -75,10 +74,9 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
             return
         }
         
-        // --- FIX: Buat variable final/immutable yang pasti TIDAK NULL untuk dipakai di dalam observe ---
+        // Kita pertahankan variabel safeUrl agar kode lebih aman
         val safeUrl: String = url 
-        // ------------------------------------------------------------------------------------------
-
+        
         setToolBarScrollFlags()
         setUpToolbar(name)
         binding.settingsToolbar.apply {
@@ -176,13 +174,10 @@ class PluginsFragment : BaseFragment<FragmentPluginsBinding>(
                 binding.pluginRecyclerView.scrollToPosition(0)
             }
 
-            // --- ADIXTREAM MODIFIKASI: AUTO INSTALL PLUGIN ---
-            // Menggunakan safeUrl untuk mencegah error NullPointer/TypeMismatch
-            if (!isLocal && !hasAutoInstalled && list.isNotEmpty()) {
-                hasAutoInstalled = true
-                PluginsViewModel.downloadAll(activity, safeUrl, pluginViewModel)
-            }
-            // -------------------------------------------------
+            // --- PERBAIKAN: MODIFIKASI ADIXTREAM DIHAPUS TOTAL DI SINI ---
+            // Logika Auto Install dipindahkan sepenuhnya ke MainActivity.kt
+            // agar tidak berjalan berulang kali saat membuka menu.
+            // -------------------------------------------------------------
         }
 
         if (isLocal) {
