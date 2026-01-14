@@ -9,6 +9,7 @@ import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Rect
+import android.net.Uri
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
@@ -23,6 +24,7 @@ import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.IdRes
 import androidx.annotation.MainThread
@@ -31,7 +33,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.edit
-import androidx.core.net.toUri
 import androidx.core.view.children
 import androidx.core.view.get
 import androidx.core.view.isGone
@@ -106,7 +107,6 @@ import com.lagradost.cloudstream3.ui.SyncWatchType
 import com.lagradost.cloudstream3.ui.WatchType
 import com.lagradost.cloudstream3.ui.account.AccountHelper.showAccountSelectLinear
 import com.lagradost.cloudstream3.ui.download.DOWNLOAD_NAVIGATE_TO
-import com.lagradost.cloudstream3.ui.home.HomeFragment
 import com.lagradost.cloudstream3.ui.home.HomeViewModel
 import com.lagradost.cloudstream3.ui.library.LibraryViewModel
 import com.lagradost.cloudstream3.ui.player.BasicLink
@@ -159,10 +159,9 @@ import com.lagradost.cloudstream3.utils.DataStoreHelper.accounts
 import com.lagradost.cloudstream3.utils.DataStoreHelper.migrateResumeWatching
 import com.lagradost.cloudstream3.utils.Event
 import com.lagradost.cloudstream3.utils.ImageLoader.loadImage
-import com.lagradost.cloudstream3.utils.InAppUpdater.runAutoUpdate
+import com.lagradost.cloudstream3.utils.InAppUpdater.Companion.runAutoUpdate
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.SnackbarHelper.showSnackbar
-import com.lagradost.cloudstream3.utils.TvChannelUtils
 import com.lagradost.cloudstream3.utils.UIHelper.changeStatusBarState
 import com.lagradost.cloudstream3.utils.UIHelper.checkWrite
 import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
@@ -195,6 +194,13 @@ import androidx.tvprovider.media.tv.Channel
 import androidx.tvprovider.media.tv.TvContractCompat
 import android.content.ComponentName
 import android.content.ContentUris
+import com.lagradost.cloudstream3.ui.home.HomeFragment
+import com.lagradost.cloudstream3.utils.TvChannelUtils
+
+// --- IMPORT TAMBAHAN ---
+import com.lagradost.cloudstream3.plugins.RepositoryManager
+import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
+// -----------------------
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
     companion object {
@@ -342,7 +348,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                         activity?.findViewById<NavigationRailView>(R.id.nav_rail_view)?.selectedItemId =
                             R.id.navigation_search
                     } else if (safeURI(str)?.scheme == APP_STRING_PLAYER) {
-                        val uri = str.toUri()
+                        val uri = Uri.parse(str)
                         val name = uri.getQueryParameter("name")
                         val url = URLDecoder.decode(uri.authority, "UTF-8")
 
@@ -706,7 +712,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         broadcastIntent.setClass(this, VideoDownloadRestartReceiver::class.java)
         this.sendBroadcast(broadcastIntent)
         afterPluginsLoadedEvent -= ::onAllPluginsLoaded
-        detachBackPressedCallback("MainActivityDefault")
         super.onDestroy()
     }
 
@@ -788,8 +793,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             false
         }
     }
-
-
     private val pluginsLock = Mutex()
     private fun onAllPluginsLoaded(success: Boolean = false) {
         ioSafe {
@@ -959,7 +962,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         private var animator: ValueAnimator? = null
 
         /** if this is enabled it will keep the focus unmoving
-         *  during listview move */
+         * during listview move */
         private const val NO_MOVE_LIST: Boolean = false
 
         /** If this is enabled then it will try to move the
@@ -1158,7 +1161,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
-
     @Suppress("DEPRECATION_ERROR")
     override fun onCreate(savedInstanceState: Bundle?) {
         app.initClient(this)
@@ -1201,8 +1203,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             val lastAppAutoBackup: String = getKey("VERSION_NAME") ?: ""
             if (appVer != lastAppAutoBackup) {
                 setKey("VERSION_NAME", BuildConfig.VERSION_NAME)
-                if (lastAppAutoBackup.isEmpty()) return@safe
-
                 safe {
                     backup(this)
                 }
@@ -1265,7 +1265,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             showToast(txt(R.string.unable_to_inflate, t.message ?: ""), Toast.LENGTH_LONG)
             null
         }
-
         binding?.apply {
             fixSystemBarsPadding(
                 navView,
@@ -1281,6 +1280,52 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 padTop = false
             )
         }
+
+        // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (FINAL FIX V3) ---
+        
+        // 1. Auto Load Repository (DIAM-DIAM + AUTO INSTALL + FIX TYPE MISMATCH)
+        ioSafe {
+            val repoAddedKey = "HAS_ADDED_MY_REPO_V3" // Key versi baru
+            if (getKey(repoAddedKey, false) != true) {
+                try {
+                    val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
+                    
+                    // A. Parse repository 
+                    val parsedRepo = RepositoryManager.parseRepository(customRepoUrl)
+                    
+                    if (parsedRepo != null) {
+                        // B. KONVERSI KE REPOSITORY DATA (PERBAIKAN ERROR GRADLE)
+                        // Membuat object RepositoryData secara manual
+                        val finalRepoData = com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData(
+                            parsedRepo.iconUrl,
+                            parsedRepo.name,
+                            customRepoUrl
+                        )
+
+                        // C. Masukkan ke sistem tanpa permisi (Silent Add)
+                        RepositoryManager.addRepository(finalRepoData)
+                        
+                        // D. Tandai sudah selesai
+                        setKey(repoAddedKey, true) 
+                        Log.i(TAG, "Silent-loaded custom repository: $customRepoUrl")
+
+                        // E. LANGSUNG TRIGGER DOWNLOAD PLUGIN OTOMATIS
+                        main {
+                            PluginsViewModel.downloadAll(this@MainActivity, customRepoUrl, null)
+                        }
+                    }
+                } catch (e: Exception) {
+                    logError(e)
+                }
+            }
+        }
+        
+        // 2. Bypass/Lewati Setup Wizard (Bahasa & Tema)
+        if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
+             setKey(HAS_DONE_SETUP_KEY, true)
+             updateLocale() 
+        }
+        // -------------------------------------------------
 
         // overscan
         val padding = settingsManager.getInt(getString(R.string.overscan_key), 0).toPx
@@ -1664,6 +1709,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             if (navDestination.matchDestination(R.id.navigation_home)) {
                 attachBackPressedCallback("MainActivity") {
                     showConfirmExitDialog(settingsManager)
+                    setNavigationBarColorCompat(R.attr.primaryGrayBackground)
+                    updateLocale()
                 }
             } else detachBackPressedCallback("MainActivity")
         }
@@ -1923,7 +1970,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
          fun buildMediaQueueItem(video: String): MediaQueueItem {
            // val movieMetadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_PHOTO)
             //movieMetadata.putString(MediaMetadata.KEY_TITLE, "CloudStream")
-            val mediaInfo = MediaInfo.Builder(video.toUri().toString())
+            val mediaInfo = MediaInfo.Builder(Uri.parse(video).toString())
                 .setStreamType(MediaInfo.STREAM_TYPE_NONE)
                 .setContentType(MimeTypes.IMAGE_JPEG)
                // .setMetadata(movieMetadata).build()
@@ -2001,22 +2048,29 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
 
+        // --- INI BAGIAN PENTING UNTUK BYPASS SETUP ---
+        // Jika kunci setup belum ada, kita buat TRUE dan JANGAN NAVIGASI KE SETUP LANGUAGE
         try {
             if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
-                navController.navigate(R.id.navigation_setup_language)
-                // If no plugins bring up extensions screen
-            } else if (PluginManager.getPluginsOnline().isEmpty()
+                setKey(HAS_DONE_SETUP_KEY, true)
+                // Kita tidak memanggil navController.navigate(...)
+                // Jadi aplikasi akan tetap di HomeFragment
+            } 
+            // Bagian ini biasanya mengarahkan ke setup extensions jika kosong, 
+            // tapi karena kita sudah load repo di atas, user akan baik-baik saja.
+            else if (PluginManager.getPluginsOnline().isEmpty()
                 && PluginManager.getPluginsLocal().isEmpty()
-//                && PREBUILT_REPOSITORIES.isNotEmpty()
             ) {
-                navController.navigate(
+                 // Opsional: Jika masih mau menampilkan halaman extensions jika kosong
+                 /* navController.navigate(
                     R.id.navigation_setup_extensions,
                     SetupFragmentExtensions.newInstance(false)
-                )
+                ) */
             }
         } catch (e: Exception) {
             logError(e)
         }
+        // ----------------------------------------------
 
 //        Used to check current focus for TV
 //        main {
@@ -2027,11 +2081,24 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 //            }
 //        }
 
-        attachBackPressedCallback("MainActivityDefault") {
-            setNavigationBarColorCompat(R.attr.primaryGrayBackground)
-            updateLocale()
-            runDefault()
-        }
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    setNavigationBarColorCompat(R.attr.primaryGrayBackground)
+                    updateLocale()
+
+                    // If we don't disable we end up in a loop with default behavior calling
+                    // this callback as well, so we disable it, run default behavior,
+                    // then re-enable this callback so it can be used for next back press.
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        )
+
+
     }
 
     /** Biometric stuff **/
