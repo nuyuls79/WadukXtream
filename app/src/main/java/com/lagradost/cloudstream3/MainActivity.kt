@@ -588,7 +588,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
-
     //private var mCastSession: CastSession? = null
     var mSessionManager: SessionManager? = null
     private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
@@ -1281,49 +1280,50 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             )
         }
 
-        // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (FINAL FIX V3) ---
-        
-        // 1. Auto Load Repository (DIAM-DIAM + AUTO INSTALL + FIX TYPE MISMATCH)
+        // --- KODE MODIFIKASI: AUTO REPO & AUTO DOWNLOAD (FINAL FIX ADIXTREAM) ---
+
+        val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
+
         ioSafe {
-            val repoAddedKey = "HAS_ADDED_MY_REPO_V3" // Key versi baru
-            if (getKey(repoAddedKey, false) != true) {
+            // BAGIAN 1: Pastikan Repository Tertanam (Hanya jika belum ada)
+            // Kita cek langsung ke RepositoryManager apakah URL ini sudah terdaftar
+            val currentRepos = RepositoryManager.getRepositories()
+            val isRepoAlreadyAdded = currentRepos.any { it.url == customRepoUrl }
+
+            if (!isRepoAlreadyAdded) {
                 try {
-                    val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
-                    
-                    // A. Parse repository 
                     val parsedRepo = RepositoryManager.parseRepository(customRepoUrl)
-                    
                     if (parsedRepo != null) {
-                        // B. KONVERSI KE REPOSITORY DATA (PERBAIKAN ERROR GRADLE)
-                        // Membuat object RepositoryData secara manual
                         val finalRepoData = com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData(
                             parsedRepo.iconUrl,
                             parsedRepo.name,
                             customRepoUrl
                         )
-
-                        // C. Masukkan ke sistem tanpa permisi (Silent Add)
                         RepositoryManager.addRepository(finalRepoData)
-                        
-                        // D. Tandai sudah selesai
-                        setKey(repoAddedKey, true) 
-                        Log.i(TAG, "Silent-loaded custom repository: $customRepoUrl")
-
-                        // E. LANGSUNG TRIGGER DOWNLOAD PLUGIN OTOMATIS
-                        main {
-                            PluginsViewModel.downloadAll(this@MainActivity, customRepoUrl, null)
-                        }
+                        Log.i(TAG, "AdiXtream: Repository berhasil ditanam.")
                     }
                 } catch (e: Exception) {
                     logError(e)
                 }
             }
+
+            // BAGIAN 2: CEK & DOWNLOAD PLUGIN BARU (Jalan SETIAP KALI aplikasi dibuka)
+            // Kita taruh ini DI LUAR pengecekan "isRepoAlreadyAdded" supaya selalu dieksekusi.
+            main {
+                try {
+                    Log.i(TAG, "AdiXtream: Memeriksa plugin baru dari repository...")
+                    // Fungsi ini akan membandingkan plugin di server vs lokal, lalu download yang kurang
+                    PluginsViewModel.downloadAll(this@MainActivity, customRepoUrl, null)
+                } catch (e: Exception) {
+                    Log.e(TAG, "AdiXtream: Gagal auto-download plugin", e)
+                }
+            }
         }
-        
+
         // 2. Bypass/Lewati Setup Wizard (Bahasa & Tema)
         if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
-             setKey(HAS_DONE_SETUP_KEY, true)
-             updateLocale() 
+            setKey(HAS_DONE_SETUP_KEY, true)
+            updateLocale()
         }
         // -------------------------------------------------
 
@@ -1351,7 +1351,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 binding?.navHostFragment?.isInvisible = true
             }
         }
-
         // Automatically enable jsdelivr if cant connect to raw.githubusercontent.com
         if (this.getKey<Boolean>(getString(R.string.jsdelivr_proxy_key)) == null && isNetworkAvailable()) {
             main {
