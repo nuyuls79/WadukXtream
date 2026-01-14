@@ -435,8 +435,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
-
-
     var lastPopup: SearchResponse? = null
     fun loadPopup(result: SearchResponse, load: Boolean = true) {
         lastPopup = result
@@ -1281,35 +1279,37 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             )
         }
 
-        // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (FINAL FIX V3) ---
+        // =================================================================================
+        // KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (VERSI FINAL "ONCE ONLY")
+        // =================================================================================
         
-        // 1. Auto Load Repository (DIAM-DIAM + AUTO INSTALL + FIX TYPE MISMATCH)
+        // 1. Auto Load Repository (HANYA JIKA REPO BELUM TERDAFTAR DI APLIKASI)
         ioSafe {
-            val repoAddedKey = "HAS_ADDED_MY_REPO_V3" // Key versi baru
-            if (getKey(repoAddedKey, false) != true) {
+            val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
+            
+            // A. Cek Cerdas: Ambil daftar repo yg sudah ada, cek apakah repo kita ada di situ?
+            val currentRepos = RepositoryManager.getRepositories()
+            val isRepoAlreadyExist = currentRepos.any { it.url == customRepoUrl }
+
+            // B. JIKA BELUM ADA (Berarti ini instalasi pertama atau data dihapus), baru kita gas!
+            if (!isRepoAlreadyExist) {
                 try {
-                    val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
-                    
-                    // A. Parse repository 
+                    // Parse repository dari URL
                     val parsedRepo = RepositoryManager.parseRepository(customRepoUrl)
                     
                     if (parsedRepo != null) {
-                        // B. KONVERSI KE REPOSITORY DATA (PERBAIKAN ERROR GRADLE)
-                        // Membuat object RepositoryData secara manual
+                        // Buat object RepositoryData
                         val finalRepoData = com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData(
                             parsedRepo.iconUrl,
                             parsedRepo.name,
                             customRepoUrl
                         )
 
-                        // C. Masukkan ke sistem tanpa permisi (Silent Add)
+                        // Masukkan ke sistem
                         RepositoryManager.addRepository(finalRepoData)
-                        
-                        // D. Tandai sudah selesai
-                        setKey(repoAddedKey, true) 
-                        Log.i(TAG, "Silent-loaded custom repository: $customRepoUrl")
+                        Log.i(TAG, "First Run: Installing Custom Repository: $customRepoUrl")
 
-                        // E. LANGSUNG TRIGGER DOWNLOAD PLUGIN OTOMATIS
+                        // C. DOWNLOAD SEMUA PLUGIN (Hanya terjadi SEKALI seumur hidup instalasi)
                         main {
                             PluginsViewModel.downloadAll(this@MainActivity, customRepoUrl, null)
                         }
@@ -1317,15 +1317,18 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 } catch (e: Exception) {
                     logError(e)
                 }
+            } else {
+                Log.i(TAG, "Custom Repo sudah ada. Skip auto-download agar pilihan user tidak terreset.")
             }
         }
         
         // 2. Bypass/Lewati Setup Wizard (Bahasa & Tema)
+        // Ini tetap pakai key agar tidak mengganggu settingan user nanti kalau mereka mau ubah
         if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
              setKey(HAS_DONE_SETUP_KEY, true)
              updateLocale() 
         }
-        // -------------------------------------------------
+        // =================================================================================
 
         // overscan
         val padding = settingsManager.getInt(getString(R.string.overscan_key), 0).toPx
