@@ -19,6 +19,9 @@
   <a href="https://saweria.co/michat88">
     <img src="https://img.shields.io/badge/Saweria-Traktir%20Kopi-FFA500?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Traktir Kopi">
   </a>
+  <a href="https://t.me/michat88">
+    <img src="https://img.shields.io/badge/Telegram-Contact%20Me-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Contact Me">
+  </a>
 </p>
 
 ---
