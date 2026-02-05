@@ -4,7 +4,9 @@ import android.content.ComponentName
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import androidx.tvprovider.media.tv.Channel
 import androidx.tvprovider.media.tv.PreviewProgram
@@ -16,27 +18,39 @@ import com.lagradost.cloudstream3.base64Encode
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.APP_STRING_SHARE
 import com.lagradost.cloudstream3.utils.DataStore.getKey
 import com.lagradost.cloudstream3.utils.DataStore.setKey
-import java.net.URLEncoder
 
 const val PROGRAM_ID_LIST_KEY = "persistent_program_ids"
 
 object TvChannelUtils {
+    
+    // Fungsi bantuan untuk mengecek apakah device mendukung TV Input Framework
+    private fun isTvSupported(context: Context): Boolean {
+        val pm = context.packageManager
+        // Cek fitur Live TV atau Leanback (Android TV UI)
+        return pm.hasSystemFeature(PackageManager.FEATURE_LIVE_TV) || 
+               pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+    }
+
     fun Context.saveProgramId(programId: Long) {
         val existing: List<Long> = getKey(PROGRAM_ID_LIST_KEY) ?: emptyList()
         val updated = (existing + programId).distinct()
         setKey(PROGRAM_ID_LIST_KEY, updated)
     }
+
     fun Context.getStoredProgramIds(): List<Long> {
         return getKey(PROGRAM_ID_LIST_KEY) ?: emptyList()
     }
+
     fun Context.removeProgramId(programId: Long) {
         val existing: List<Long> = getKey(PROGRAM_ID_LIST_KEY) ?: emptyList()
         val updated = existing.filter { it != programId }
         setKey(PROGRAM_ID_LIST_KEY, updated)
     }
 
-
     fun getChannelId(context: Context, channelName: String): Long? {
+        // Jika bukan TV, hentikan proses agar tidak error
+        if (!isTvSupported(context)) return null
+
         return try {
             context.contentResolver.query(
                 TvContractCompat.Channels.CONTENT_URI,
@@ -60,19 +74,23 @@ object TvChannelUtils {
                 null
             }
         } catch (e: Exception) {
-            Log.e("TvChannelUtils", "Query failed: ${e.message}", e)
+            // Menangkap error jika Provider tidak ditemukan di HP
+            Log.w("TvChannelUtils", "Gagal mengambil Channel ID (Mungkin bukan Android TV): ${e.message}")
             null
         }
     }
 
     /** Insert programs into a channel */
     fun addPrograms(context: Context, channelId: Long, items: List<SearchResponse>) {
+        // Jika bukan TV, return
+        if (!isTvSupported(context)) return
+
         for (item in items) {
             try {
                 val nameBase64 = base64Encode(item.apiName.toByteArray(Charsets.UTF_8))
                 val urlBase64 = base64Encode(item.url.toByteArray(Charsets.UTF_8))
                 val csshareUri = "$APP_STRING_SHARE:$nameBase64?$urlBase64"
-                val poster=item.posterUrl
+                val poster = item.posterUrl
                 val builder = PreviewProgram.Builder()
                     .setChannelId(channelId)
                     .setTitle(item.name)
@@ -90,7 +108,6 @@ object TvChannelUtils {
                 // Validate poster URL before setting
                 if (!poster.isNullOrBlank() && poster.startsWith("http")) {
                     builder.setPosterArtUri(Uri.parse(poster))
-
                 }
                 val program = builder.build()
 
@@ -107,6 +124,10 @@ object TvChannelUtils {
                     Log.e("TvChannelUtils", "Insert failed for ${item.name}")
                 }
 
+            } catch (error: IllegalArgumentException) {
+                // Menangkap error URL tidak dikenal
+                Log.w("TvChannelUtils", "Fitur Preview Program tidak didukung di perangkat ini.")
+                break // Stop loop jika fitur tidak ada
             } catch (error: Exception) {
                 Log.e("TvChannelUtils", "Error inserting ${item.name}: $error")
             }
@@ -114,6 +135,9 @@ object TvChannelUtils {
     }
 
     fun deleteStoredPrograms(context: Context) {
+        // Cek dukungan TV
+        if (!isTvSupported(context)) return
+
         val programIds = context.getStoredProgramIds()
 
         for (id in programIds) {
@@ -126,7 +150,7 @@ object TvChannelUtils {
                     Log.w("ProgramDelete", "No program found for ID: $id")
                 }
             } catch (e: Exception) {
-                Log.e("ProgramDelete", "Failed to delete program ID: $id", e)
+                Log.w("ProgramDelete", "Gagal menghapus program ID: $id (Fitur TV mungkin tidak ada)")
             }
         }
 
@@ -134,29 +158,42 @@ object TvChannelUtils {
     }
 
     fun createTvChannel(context: Context) {
-        val componentName = ComponentName(context, MainActivity::class.java)
-        val iconUri = Uri.parse("android.resource://${context.packageName}/mipmap/ic_launcher")
-        val inputId = TvContractCompat.buildInputId(componentName)
-        val channel = Channel.Builder()
-            .setType(TvContractCompat.Channels.TYPE_PREVIEW)
-            .setAppLinkIconUri(iconUri)
-            .setDisplayName(context.getString(R.string.app_name))
-            .setAppLinkIntent(Intent(Intent.ACTION_VIEW).apply {
-                data = Uri.parse("cloudstreamapp://open")
-            })
-            .setInputId(inputId)
-            .build()
+        // FIX UTAMA: Cek dulu apakah HP ini support TV Channel
+        if (!isTvSupported(context)) {
+            Log.i("TvChannelUtils", "Device ini tidak mendukung TV Channels, membatalkan pembuatan channel.")
+            return
+        }
 
-        val channelUri = context.contentResolver.insert(
-            TvContractCompat.Channels.CONTENT_URI,
-            channel.toContentValues()
-        )
+        try {
+            val componentName = ComponentName(context, MainActivity::class.java)
+            val iconUri = Uri.parse("android.resource://${context.packageName}/mipmap/ic_launcher")
+            val inputId = TvContractCompat.buildInputId(componentName)
+            
+            val channel = Channel.Builder()
+                .setType(TvContractCompat.Channels.TYPE_PREVIEW)
+                .setAppLinkIconUri(iconUri)
+                .setDisplayName(context.getString(R.string.app_name))
+                .setAppLinkIntent(Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse("cloudstreamapp://open")
+                })
+                .setInputId(inputId)
+                .build()
 
-        channelUri?.let {
-            val channelId = ContentUris.parseId(it)
-            TvContractCompat.requestChannelBrowsable(context, channelId)
-            Log.d("TvChannelUtils", "Channel Created: $channelId")
+            val channelUri = context.contentResolver.insert(
+                TvContractCompat.Channels.CONTENT_URI,
+                channel.toContentValues()
+            )
+
+            channelUri?.let {
+                val channelId = ContentUris.parseId(it)
+                TvContractCompat.requestChannelBrowsable(context, channelId)
+                Log.d("TvChannelUtils", "Channel Created: $channelId")
+            }
+        } catch (e: IllegalArgumentException) {
+            // Menangkap error "Unknown URL content://android.media.tv/channel"
+            Log.e("TvChannelUtils", "Gagal membuat TV Channel: Provider tidak ditemukan (Ini normal di HP)")
+        } catch (e: Exception) {
+            Log.e("TvChannelUtils", "Error umum saat membuat TV Channel", e)
         }
     }
-
 }
