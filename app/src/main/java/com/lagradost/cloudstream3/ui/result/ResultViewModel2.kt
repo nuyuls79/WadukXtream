@@ -891,6 +891,7 @@ class ResultViewModel2 : ViewModel() {
             )
         }
     }
+
     private val _watchStatus: MutableLiveData<WatchType> = MutableLiveData(WatchType.NONE)
     val watchStatus: LiveData<WatchType> get() = _watchStatus
 
@@ -995,7 +996,7 @@ class ResultViewModel2 : ViewModel() {
      *
      * @param context The context to use for operations.
      * @param statusChangedCallback A callback that is invoked when the subscription status changes.
-     * It provides the new subscription status (true if subscribed, false if unsubscribed, null if action was canceled).
+     *        It provides the new subscription status (true if subscribed, false if unsubscribed, null if action was canceled).
      */
     fun toggleSubscriptionStatus(
         context: Context?,
@@ -1072,7 +1073,7 @@ class ResultViewModel2 : ViewModel() {
      *
      * @param context The context to use.
      * @param statusChangedCallback A callback that is invoked when the favorite status changes.
-     * It provides the new favorite status (true if added to favorites, false if removed, null if action was canceled).
+     *        It provides the new favorite status (true if added to favorites, false if removed, null if action was canceled).
      */
     fun toggleFavoriteStatus(
         context: Context?,
@@ -1493,6 +1494,8 @@ class ResultViewModel2 : ViewModel() {
         }
         return result
     }
+
+
     private suspend fun handleEpisodeClickEvent(click: EpisodeClickEvent) {
         when (click.action) {
             ACTION_SHOW_OPTIONS -> {
@@ -2593,23 +2596,20 @@ class ResultViewModel2 : ViewModel() {
     ): List<ExtractedTrailerData> =
         coroutineScope {
             val returnlist = ArrayList<ExtractedTrailerData>()
-            // Batasi loop agar tidak terlalu agresif
-            val chunkedTrailers = if (limit > 0) loadResponse.trailers.chunked(limit) else listOf(loadResponse.trailers)
-
-            for (list in chunkedTrailers) {
-                 val processedBatch = list.amap { trailerData ->
+            loadResponse.trailers.windowed(limit, limit, true).takeWhile { list ->
+                list.amap { trailerData ->
                     try {
-                        val links = arrayListOf<Pair<ExtractorLink, String>>()
+                        val links = arrayListOf<Pair<ExtractorLink,String>>()
                         val subs = arrayListOf<SubtitleFile>()
-                        // Logic load extractor
                         if (!loadExtractor(
                                 trailerData.extractorUrl,
                                 trailerData.referer,
                                 { subs.add(it) },
-                                { links.add(Pair(it, trailerData.extractorUrl)) }) && trailerData.raw
+                                { links.add(Pair(it,trailerData.extractorUrl))}) && trailerData.raw
                         ) {
-                            // Fallback jika loadExtractor gagal tapi raw=true
-                             val rawLink = newExtractorLink(
+                            arrayListOf(
+                                Pair(
+                                    newExtractorLink(
                                     "",
                                     "Trailer",
                                     trailerData.extractorUrl,
@@ -2618,26 +2618,20 @@ class ResultViewModel2 : ViewModel() {
                                     this.referer = trailerData.referer ?: ""
                                     this.quality = Qualities.Unknown.value
                                     this.headers = trailerData.headers
-                                }
-                             links.add(Pair(rawLink, trailerData.extractorUrl))
-                        }
-
-                        // Kembalikan hasil proses
-                        if (links.isNotEmpty()) {
-                             ExtractedTrailerData(links, subs)
+                                },trailerData.extractorUrl)
+                            ) to arrayListOf()
                         } else {
-                            null
+                            links to subs
                         }
                     } catch (e: Throwable) {
                         logError(e)
                         null
                     }
-                }.filterNotNull()
+                }.filterNotNull().map { (links, subs) -> ExtractedTrailerData(links, subs) }.let {
+                    returnlist.addAll(it)
+                }
 
-                returnlist.addAll(processedBatch)
-
-                // Stop jika sudah mencapai limit (jika limit > 0)
-                if (limit > 0 && returnlist.size >= limit) break
+                returnlist.size < limit
             }
             return@coroutineScope returnlist
         }
