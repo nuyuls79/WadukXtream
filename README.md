@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/michat88/Zaneta/refs/heads/main/Icons/AdiXtream.png" alt="Logo AdiXtream" width="150" height="150" />
   <br>
-  <strong>Nonton Film, Drakor, & Anime Tanpa Ribet.</strong>
+  <strong>Nonton Film & Drakor Tanpa Ribet.</strong>
   <br>
   <br>
   <a href="https://github.com/michat88/AdiXtream/stargazers">
