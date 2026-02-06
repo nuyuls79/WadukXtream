@@ -29,7 +29,7 @@
   </a>
   <br>
   <br>
-  <strong>⚠️ Aplikasi ini tidak disarankan untuk anak usia di bawah umur.</strong>
+  <strong>⚠️ Bijaklah dalam menggunakan aplikasi ini. Beberapa konten mungkin tidak sesuai untuk anak di bawah umur.</strong>
 </p>
 
 ---
