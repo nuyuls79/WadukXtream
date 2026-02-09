@@ -2059,8 +2059,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         // ----------------------------------------------
         
         // --- KODE BARU: MENAMPILKAN POPUP DUKUNGAN ---
-        // Panggil fungsi dari file AdiXtreamSupport.kt
-        AdiXtreamSupport.showStartupPopup(this)
+        // Logika: Hanya munculkan popup jika user membuka aplikasi BIASA (klik ikon).
+        // Jika user klik "Lanjutkan Menonton" (ada data intent), jangan ganggu, langsung gass video!
+        if (intent?.data == null) {
+            AdiXtreamSupport.showStartupPopup(this)
+        }
         // ----------------------------------------------
 
         onBackPressedDispatcher.addCallback(
