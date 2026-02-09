@@ -2047,39 +2047,21 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             DataStoreHelper.currentHomePage = homepage
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
-
+        
         // --- INI BAGIAN PENTING UNTUK BYPASS SETUP ---
-        // Jika kunci setup belum ada, kita buat TRUE dan JANGAN NAVIGASI KE SETUP LANGUAGE
         try {
             if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
                 setKey(HAS_DONE_SETUP_KEY, true)
-                // Kita tidak memanggil navController.navigate(...)
-                // Jadi aplikasi akan tetap di HomeFragment
             } 
-            // Bagian ini biasanya mengarahkan ke setup extensions jika kosong, 
-            // tapi karena kita sudah load repo di atas, user akan baik-baik saja.
-            else if (PluginManager.getPluginsOnline().isEmpty()
-                && PluginManager.getPluginsLocal().isEmpty()
-            ) {
-                 // Opsional: Jika masih mau menampilkan halaman extensions jika kosong
-                 /* navController.navigate(
-                    R.id.navigation_setup_extensions,
-                    SetupFragmentExtensions.newInstance(false)
-                ) */
-            }
         } catch (e: Exception) {
             logError(e)
         }
         // ----------------------------------------------
-
-//        Used to check current focus for TV
-//        main {
-//            while (true) {
-//                delay(5000)
-//                println("Current focus: $currentFocus")
-//                showToast(this, currentFocus.toString(), Toast.LENGTH_LONG)
-//            }
-//        }
+        
+        // --- KODE BARU: MENAMPILKAN POPUP DUKUNGAN ---
+        // Panggil fungsi dari file AdiXtreamSupport.kt
+        AdiXtreamSupport.showStartupPopup(this)
+        // ----------------------------------------------
 
         onBackPressedDispatcher.addCallback(
             this,
@@ -2097,10 +2079,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 }
             }
         )
-
-
     }
-
     /** Biometric stuff **/
     override fun onAuthenticationSuccess() {
         // make background (nav host fragment) visible again
