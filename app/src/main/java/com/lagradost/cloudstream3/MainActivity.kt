@@ -2116,21 +2116,23 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         }
 
         val deviceIdVal = PremiumManager.getDeviceId(context)
-        val deviceIdText = TextView(context).apply {
+                val deviceIdText = TextView(context).apply {
             text = "DEVICE ID: $deviceIdVal"
             textSize = 18f
             setTextColor(android.graphics.Color.YELLOW)
             typeface = android.graphics.Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, 30)
-            
+
             setOnClickListener {
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardService
+                // PERBAIKAN DI SINI: Ubah ClipboardService ke ClipboardManager
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                 val clip = android.content.ClipData.newPlainText("Device ID", deviceIdVal)
                 clipboard.setPrimaryClip(clip)
                 Toast.makeText(context, "ID Disalin!", Toast.LENGTH_SHORT).show()
             }
         }
+
 
         val inputCode = EditText(context).apply {
             hint = "Masukkan KODE UNLOCK"
