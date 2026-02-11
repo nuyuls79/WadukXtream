@@ -18,7 +18,7 @@ object PremiumManager {
     
     // URL Repo Gratis (Cuma LayarKacaProvider) - Harus kamu siapkan JSON-nya terpisah
     // Jika belum ada, biarkan kosong dulu, nanti kita logic manual.
-    const val FREE_REPO_URL = "URL_REPO_VERSI_GRATIS_DISINI" 
+    const val FREE_REPO_URL = "https://raw.githubusercontent.com/michat88/free_repo/refs/heads/builds/repo.json" 
 
     fun getDeviceId(context: Context): String {
         val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
