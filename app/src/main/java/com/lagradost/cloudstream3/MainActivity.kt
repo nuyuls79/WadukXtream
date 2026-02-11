@@ -20,9 +20,12 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.Button // Tambahan untuk Popup
 import android.widget.CheckBox
+import android.widget.EditText // Tambahan untuk Popup
 import android.widget.ImageView
-import android.widget.LinearLayout
+import android.widget.LinearLayout // Tambahan untuk Popup
+import android.widget.TextView // Tambahan untuk Popup
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
@@ -197,9 +200,10 @@ import android.content.ContentUris
 import com.lagradost.cloudstream3.ui.home.HomeFragment
 import com.lagradost.cloudstream3.utils.TvChannelUtils
 
-// --- IMPORT TAMBAHAN ---
+// --- IMPORT TAMBAHAN ADIXTREAM ---
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
+import com.lagradost.cloudstream3.PremiumManager // File logic premium
 // -----------------------
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
@@ -588,7 +592,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             }
         }
     }
-
     //private var mCastSession: CastSession? = null
     var mSessionManager: SessionManager? = null
     private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
@@ -739,6 +742,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         lastNavTime = currentTime
 
         val destinationId = item.itemId
+
+        // --- MODIFIKASI ADIXTREAM START ---
+        // Cek jika user mau masuk menu Extensions/Plugins
+        if (destinationId == R.id.navigation_settings_extensions || destinationId == R.id.navigation_settings_plugins) {
+            if (!PremiumManager.isPremium(this)) {
+                // Jika belum premium, munculkan Popup dan BATALKAN navigasi
+                showPremiumUnlockDialog()
+                return false
+            }
+        }
+        // --- MODIFIKASI ADIXTREAM END ---
 
         // Check if we are already at the selected destination
         if (navController.currentDestination?.id == destinationId) return false
@@ -1185,6 +1199,24 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         setNavigationBarColorCompat(R.attr.primaryGrayBackground)
         updateLocale()
         super.onCreate(savedInstanceState)
+        
+        // --- ADIXTREAM SECURITY CHECK (START) ---
+        // Cek status premium setiap kali aplikasi dibuka
+        ioSafe {
+            // Jika user TIDAK Premium (atau masa aktif habis)
+            if (!PremiumManager.isPremium(this@MainActivity)) {
+                // Hapus Repo Premium agar plugin berbayar hilang/tidak bisa update
+                val currentRepos = RepositoryManager.getRepositories()
+                currentRepos.forEach { repo ->
+                    if (repo.url == PremiumManager.PREMIUM_REPO_URL) {
+                        RepositoryManager.removeRepository(this@MainActivity, repo)
+                        Log.i("AdiXtream", "Premium expired/not found. Repository removed.")
+                    }
+                }
+            }
+        }
+        // --- ADIXTREAM SECURITY CHECK (END) ---
+
         try {
             if (isCastApiAvailable()) {
                 CastContext.getSharedInstance(this) { it.run() }
@@ -1281,51 +1313,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             )
         }
 
-        // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (FINAL FIX V3) ---
-        
-        // 1. Auto Load Repository (DIAM-DIAM + AUTO INSTALL + FIX TYPE MISMATCH)
-        ioSafe {
-            val repoAddedKey = "HAS_ADDED_MY_REPO_V3" // Key versi baru
-            if (getKey(repoAddedKey, false) != true) {
-                try {
-                    val customRepoUrl = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
-                    
-                    // A. Parse repository 
-                    val parsedRepo = RepositoryManager.parseRepository(customRepoUrl)
-                    
-                    if (parsedRepo != null) {
-                        // B. KONVERSI KE REPOSITORY DATA (PERBAIKAN ERROR GRADLE)
-                        // Membuat object RepositoryData secara manual
-                        val finalRepoData = com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData(
-                            parsedRepo.iconUrl,
-                            parsedRepo.name,
-                            customRepoUrl
-                        )
-
-                        // C. Masukkan ke sistem tanpa permisi (Silent Add)
-                        RepositoryManager.addRepository(finalRepoData)
-                        
-                        // D. Tandai sudah selesai
-                        setKey(repoAddedKey, true) 
-                        Log.i(TAG, "Silent-loaded custom repository: $customRepoUrl")
-
-                        // E. LANGSUNG TRIGGER DOWNLOAD PLUGIN OTOMATIS
-                        main {
-                            PluginsViewModel.downloadAll(this@MainActivity, customRepoUrl, null)
-                        }
-                    }
-                } catch (e: Exception) {
-                    logError(e)
-                }
-            }
-        }
-        
-        // 2. Bypass/Lewati Setup Wizard (Bahasa & Tema)
+        // --- BYPASS SETUP WIZARD (Language & Theme) ---
         if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
              setKey(HAS_DONE_SETUP_KEY, true)
              updateLocale() 
         }
-        // -------------------------------------------------
 
         // overscan
         val padding = settingsManager.getInt(getString(R.string.overscan_key), 0).toPx
@@ -2048,30 +2040,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             removeKey(USER_SELECTED_HOMEPAGE_API)
         }
 
-        // --- INI BAGIAN PENTING UNTUK BYPASS SETUP ---
-        // Jika kunci setup belum ada, kita buat TRUE dan JANGAN NAVIGASI KE SETUP LANGUAGE
-        try {
-            if (getKey(HAS_DONE_SETUP_KEY, false) != true) {
-                setKey(HAS_DONE_SETUP_KEY, true)
-                // Kita tidak memanggil navController.navigate(...)
-                // Jadi aplikasi akan tetap di HomeFragment
-            } 
-            // Bagian ini biasanya mengarahkan ke setup extensions jika kosong, 
-            // tapi karena kita sudah load repo di atas, user akan baik-baik saja.
-            else if (PluginManager.getPluginsOnline().isEmpty()
-                && PluginManager.getPluginsLocal().isEmpty()
-            ) {
-                 // Opsional: Jika masih mau menampilkan halaman extensions jika kosong
-                 /* navController.navigate(
-                    R.id.navigation_setup_extensions,
-                    SetupFragmentExtensions.newInstance(false)
-                ) */
-            }
-        } catch (e: Exception) {
-            logError(e)
-        }
-        // ----------------------------------------------
-
 //        Used to check current focus for TV
 //        main {
 //            while (true) {
@@ -2097,8 +2065,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 }
             }
         )
-
-
     }
 
     /** Biometric stuff **/
@@ -2119,6 +2085,145 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             ).text.trim() == "ok"
         } catch (t: Throwable) {
             false
+        }
+    }
+
+    // --- KODE TAMBAHAN: POPUP & DOWNLOAD PREMIUM ADIXTREAM ---
+    private fun showPremiumUnlockDialog() {
+        // Kita buat view secara manual agar tidak perlu file XML layout terpisah
+        val context = this
+        val layout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(60, 60, 60, 60)
+            setBackgroundColor(android.graphics.Color.parseColor("#202020"))
+        }
+
+        val title = TextView(context).apply {
+            text = "🔒 PREMIUM ACCESS REQUIRED"
+            textSize = 20f
+            setTextColor(android.graphics.Color.WHITE)
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 40)
+        }
+        
+        val subTitle = TextView(context).apply {
+            text = "Fitur ini terkunci. Hubungi Admin untuk mendapatkan Kode Aktivasi.\n\n💰 Harga: Rp 10.000 / Device"
+            textSize = 14f
+            setTextColor(android.graphics.Color.LTGRAY)
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 40)
+        }
+
+        val deviceIdVal = PremiumManager.getDeviceId(context)
+        val deviceIdText = TextView(context).apply {
+            text = "DEVICE ID: $deviceIdVal"
+            textSize = 18f
+            setTextColor(android.graphics.Color.YELLOW)
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 30)
+            
+            setOnClickListener {
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardService
+                val clip = android.content.ClipData.newPlainText("Device ID", deviceIdVal)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(context, "ID Disalin!", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        val inputCode = EditText(context).apply {
+            hint = "Masukkan KODE UNLOCK"
+            setHintTextColor(android.graphics.Color.GRAY)
+            setTextColor(android.graphics.Color.WHITE)
+            gravity = Gravity.CENTER
+            setPadding(30, 30, 30, 30)
+            setBackgroundColor(android.graphics.Color.parseColor("#303030"))
+        }
+
+        val btnUnlock = Button(context).apply {
+            text = "UNLOCK NOW"
+            setBackgroundColor(android.graphics.Color.parseColor("#FFD700"))
+            setTextColor(android.graphics.Color.BLACK)
+            setPadding(0, 30, 0, 0)
+            setOnClickListener {
+                val code = inputCode.text.toString().trim().uppercase()
+                val correctCode = PremiumManager.generateUnlockCode(deviceIdVal)
+                
+                // --- BACKDOOR KHUSUS DEVELOPER (HAPUS SAAT RILIS) ---
+                if (code == correctCode || code == "DEV123") {
+                    PremiumManager.activatePremium(context)
+                    Toast.makeText(context, "Premium Aktif! Mendownload Plugin...", Toast.LENGTH_LONG).show()
+                    
+                    // Trigger download otomatis
+                    performPremiumDownload()
+                    
+                    // Tutup dialog
+                    (tag as? Dialog)?.dismiss()
+                } else {
+                    Toast.makeText(context, "Kode Salah!", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        
+        val btnAdmin = Button(context).apply {
+            text = "TELEGRAM ADMIN"
+            setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            setTextColor(android.graphics.Color.CYAN)
+            setOnClickListener {
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/USERNAME_TELEGRAM_KAMU"))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Telegram tidak ditemukan", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        layout.addView(title)
+        layout.addView(subTitle)
+        layout.addView(deviceIdText)
+        layout.addView(inputCode)
+        layout.addView(btnUnlock)
+        layout.addView(btnAdmin)
+
+        val alert = AlertDialog.Builder(context)
+            .setView(layout)
+            .setCancelable(true)
+            .create()
+        
+        // Simpan referensi dialog di tag tombol agar bisa di-dismiss
+        btnUnlock.tag = alert
+        alert.show()
+    }
+
+    private fun performPremiumDownload() {
+        ioSafe {
+            try {
+                val premiumRepoUrl = PremiumManager.PREMIUM_REPO_URL
+                val parsedRepo = RepositoryManager.parseRepository(premiumRepoUrl)
+                
+                if (parsedRepo != null) {
+                    // 1. Tambah Repository ke sistem
+                    val repoData = com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData(
+                        parsedRepo.iconUrl, parsedRepo.name, premiumRepoUrl
+                    )
+                    RepositoryManager.addRepository(repoData)
+                    
+                    // 2. Download semua plugin dari repo tersebut
+                    main {
+                        PluginsViewModel.downloadAll(this@MainActivity, premiumRepoUrl, null)
+                        
+                        // 3. Arahkan user ke halaman Plugin setelah sukses
+                        navigate(R.id.navigation_settings_extensions)
+                    }
+                }
+            } catch (e: Exception) {
+                logError(e)
+                main { 
+                    Toast.makeText(this@MainActivity, "Gagal memuat repo: ${e.message}", Toast.LENGTH_SHORT).show() 
+                }
+            }
         }
     }
 }
