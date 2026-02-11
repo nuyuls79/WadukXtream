@@ -2172,7 +2172,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             setTextColor(android.graphics.Color.CYAN)
             setOnClickListener {
                 try {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/USERNAME_TELEGRAM_KAMU"))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/michat88"))
                     startActivity(intent)
                 } catch (e: Exception) {
                     Toast.makeText(context, "Telegram tidak ditemukan", Toast.LENGTH_SHORT).show()
