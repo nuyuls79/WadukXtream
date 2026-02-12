@@ -46,9 +46,9 @@ android {
             val envKeystorePath = System.getenv("KEYSTORE_PATH")
             storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
             
-            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
-            keyAlias = System.getenv("ALIAS") ?: "adixtream"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
+            storePassword = System.getenv("KEY_STORE_PASSWORD") 
+            keyAlias = System.getenv("ALIAS") 
+            keyPassword = System.getenv("KEY_PASSWORD") 
         }
     }
 
