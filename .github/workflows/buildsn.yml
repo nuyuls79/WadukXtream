@@ -16,7 +16,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Penting agar fungsi getGitCommitHash() di gradle tidak error
+          fetch-depth: 0
 
       - name: Siapkan Java (JDK 17)
         uses: actions/setup-java@v4
@@ -25,12 +25,10 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Decode Keystore dari Secret
-        env:
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+      - name: Decode Keystore
         run: |
-          # Kita taruh di root project agar gampang diakses
-          echo "$SIGNING_KEY" | base64 --decode > release.keystore
+          # Menggunakan printf untuk menjaga integritas data tanpa karakter tambahan
+          printf '%s' "${{ secrets.SIGNING_KEY }}" | base64 --decode > app/release.keystore
 
       - name: Izinkan Gradle
         run: chmod +x gradlew
@@ -38,8 +36,8 @@ jobs:
       - name: Mulai Proses Build
         run: ./gradlew assembleStableRelease
         env:
-          # Variabel ini HARUS pas dengan System.getenv() di build.gradle kamu
-          KEYSTORE_PATH: ../release.keystore
+          # Pastikan variabel ini sama dengan System.getenv() di build.gradle.kts kamu
+          KEYSTORE_PATH: release.keystore
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
