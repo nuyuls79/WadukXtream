@@ -16,7 +16,7 @@ object PremiumManager {
     const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json"
     
     // URL Repo Gratis (Cuma LayarKacaProvider)
-    const val FREE_REPO_URL = "https://raw.githubusercontent.com/michat88/free_repo/refs/heads/builds/repo.json" 
+    const val FREE_REPO_URL = "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json" 
 
     fun getDeviceId(context: Context): String {
         val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
