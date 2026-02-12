@@ -1,4 +1,4 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+eimport com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.dokka.gradle.engine.parameters.KotlinPlatform
 import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
@@ -56,7 +56,7 @@ android {
 
     defaultConfig {
         // Identitas aplikasi AdiXtream
-        applicationId = "com.adixtream.app"
+        applicationId = "com.wadukxtream.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         
@@ -65,7 +65,7 @@ android {
 
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
-        resValue("string", "app_name", "AdiXtream")
+        resValue("string", "app_name", "WadukXtream")
         resValue("color", "blackBoarder", "#FF000000")
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
