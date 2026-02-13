@@ -52,7 +52,7 @@ object PremiumManager {
         // 4. Buat Signature Keamanan (3 digit)
         // Kita hash DeviceID + DateHex + Salt supaya user gak bisa ngasal ubah DateHex
         val signatureInput = "$deviceId$dateHex$SALT"
-        val signatureHash = MessageDigest.getInstance("MD5").digest(signatureInput.toByteArray())
+        val signatureHash = MessageDigest.getInstance("MD5").digest(signatureInput.toByteArray(Charsets.UTF_8))
         val signatureHex = signatureHash.joinToString("") { "%02x".format(it) }
             .substring(0, 3).uppercase()
 
@@ -75,7 +75,7 @@ object PremiumManager {
         // 1. Cek Validitas Signature (Anti Cheat)
         // Kita hitung ulang hash-nya, apakah cocok dengan 3 digit terakhir?
         val checkInput = "$deviceId$datePartHex$SALT"
-        val checkHashBytes = MessageDigest.getInstance("MD5").digest(checkInput.toByteArray())
+        val checkHashBytes = MessageDigest.getInstance("MD5").digest(checkInput.toByteArray(Charsets.UTF_8))
         val expectedSig = checkHashBytes.joinToString("") { "%02x".format(it) }
             .substring(0, 3).uppercase()
 
