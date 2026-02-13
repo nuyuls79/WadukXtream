@@ -10,26 +10,26 @@ object PremiumManager {
     private const val PREF_IS_PREMIUM = "is_premium_user"
     private const val PREF_EXPIRY_DATE = "premium_expiry_date"
     
-    // SALT pengunci (Pastikan ini sama di aplikasi dan saat buat kode)
+    // SALT pengunci tetap
     private const val SALT = "ADIXTREAM_SECRET_KEY_2026_SECURE" 
 
     const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/aldry84/Repo_Premium/refs/heads/builds/repo.json"
     const val FREE_REPO_URL = "https://raw.githubusercontent.com/michat88/Repo_Gratis/refs/heads/builds/repo.json"
 
+    // Ambil ID perangkat murni tanpa proses hashCode yang rumit
     fun getDeviceId(context: Context): String {
         val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "00000000"
-        return kotlin.math.abs(androidId.hashCode()).toString().take(8)
+        // Ambil 8 karakter terakhir dari Android ID agar simpel
+        return androidId.takeLast(8).uppercase()
     }
 
     /**
      * GENERATE CODE (Hanya untuk Admin)
-     * Membuat 6 digit kode permanen berdasarkan Device ID
      */
     fun generateUnlockCode(deviceId: String): String {
         return try {
             val input = deviceId + SALT
             val md = MessageDigest.getInstance("MD5")
-            // Menambahkan Charsets.UTF_8 agar hasil MD5 selalu konsisten
             val bytes = md.digest(input.toByteArray(Charsets.UTF_8))
             
             bytes.joinToString("") { "%02x".format(it) }
@@ -42,7 +42,6 @@ object PremiumManager {
 
     /**
      * AKTIVASI PERMANEN
-     * Fungsi ini tidak lagi mengecek tanggal kadaluwarsa
      */
     fun activatePremiumWithCode(context: Context, code: String, deviceId: String): Boolean {
         val inputCode = code.trim().uppercase(Locale.getDefault())
@@ -52,7 +51,6 @@ object PremiumManager {
             val prefs = PreferenceManager.getDefaultSharedPreferences(context)
             prefs.edit().apply {
                 putBoolean(PREF_IS_PREMIUM, true)
-                // Menggunakan nilai maksimal agar tidak pernah expired
                 putLong(PREF_EXPIRY_DATE, Long.MAX_VALUE) 
                 apply()
             }
