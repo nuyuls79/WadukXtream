@@ -1,4 +1,4 @@
-package com.lagradost.cloudstream3
+https com.lagradost.cloudstream3
 
 import android.content.Context
 import android.provider.Settings
@@ -7,7 +7,7 @@ import androidx.preference.PreferenceManager
 object PremiumManager {
     private const val PREF_IS_PREMIUM = "is_premium_user"
     
-    const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/aldry84/Repo_Premium/refs/heads/builds/repo.json"
+    const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/michat88/PremiumRepo/refs/heads/builds/repo.json"
     const val FREE_REPO_URL = "https://raw.githubusercontent.com/michat88/Repo_Gratis/refs/heads/builds/repo.json"
 
     fun isPremium(context: Context): Boolean {
