@@ -10,7 +10,7 @@ object PremiumManager {
     private const val PREF_IS_PREMIUM = "is_premium_user"
     private const val PREF_EXPIRY_DATE = "premium_expiry_date"
     
-    // SALT yang digunakan untuk mengunci kode
+    // SALT pengunci (Pastikan ini sama di aplikasi dan saat buat kode)
     private const val SALT = "ADIXTREAM_SECRET_KEY_2026_SECURE" 
 
     const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/aldry84/Repo_Premium/refs/heads/builds/repo.json"
@@ -22,14 +22,14 @@ object PremiumManager {
     }
 
     /**
-     * GENERATE CODE (Untuk Admin)
-     * Menghasilkan 6 digit kode permanen berdasarkan Device ID
+     * GENERATE CODE (Hanya untuk Admin)
+     * Membuat 6 digit kode permanen berdasarkan Device ID
      */
     fun generateUnlockCode(deviceId: String): String {
         return try {
             val input = deviceId + SALT
             val md = MessageDigest.getInstance("MD5")
-            // Menggunakan Charsets.UTF_8 agar hasil selalu sama di semua HP
+            // Menambahkan Charsets.UTF_8 agar hasil MD5 selalu konsisten
             val bytes = md.digest(input.toByteArray(Charsets.UTF_8))
             
             bytes.joinToString("") { "%02x".format(it) }
@@ -41,8 +41,8 @@ object PremiumManager {
     }
 
     /**
-     * FUNGSI AKTIVASI LIFETIME
-     * Memverifikasi kode tanpa mengecek tanggal kadaluwarsa
+     * AKTIVASI PERMANEN
+     * Fungsi ini tidak lagi mengecek tanggal kadaluwarsa
      */
     fun activatePremiumWithCode(context: Context, code: String, deviceId: String): Boolean {
         val inputCode = code.trim().uppercase(Locale.getDefault())
@@ -52,7 +52,7 @@ object PremiumManager {
             val prefs = PreferenceManager.getDefaultSharedPreferences(context)
             prefs.edit().apply {
                 putBoolean(PREF_IS_PREMIUM, true)
-                // Set masa aktif ke nilai maksimal (Aktif Selamanya)
+                // Menggunakan nilai maksimal agar tidak pernah expired
                 putLong(PREF_EXPIRY_DATE, Long.MAX_VALUE) 
                 apply()
             }
