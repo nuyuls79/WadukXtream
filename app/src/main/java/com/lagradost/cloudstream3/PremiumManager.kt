@@ -97,7 +97,7 @@ object PremiumManager {
             // Cek apakah tanggal itu sudah lewat (Expired)?
           //  if (System.currentTimeMillis() > expiryTime) {
                 // Kode benar, tapi masa aktifnya sudah habis
-            //    return false //
+                return false 
             }
 
             // 3. Simpan Ke Preferences (Save Permanent Date)
