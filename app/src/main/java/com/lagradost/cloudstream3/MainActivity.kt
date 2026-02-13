@@ -1687,34 +1687,32 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         }
 
         // --- Logic Tombol ---
-        btnUnlock.setOnClickListener {
-            val code = inputCode.text.toString().trim().uppercase()
-            val isSuccess = PremiumManager.activatePremiumWithCode(context, code, deviceIdVal)
-            
-            if (isSuccess) {
-                (btnUnlock.tag as? Dialog)?.dismiss()
-                val expiryDate = PremiumManager.getExpiryDateString(context)
-                
-                AlertDialog.Builder(context)
-                    .setTitle("✅ PREMIUM DIAKTIFKAN")
-                    .setMessage("Terima kasih telah berlangganan!\n\n" +
-                                "📅 Masa Aktif: $expiryDate\n\n" +
-                                "Aplikasi akan direstart...")
-                    .setCancelable(false)
-                    .setPositiveButton("OK") { _, _ ->
-                        val packageManager = context.packageManager
-                        val intent = packageManager.getLaunchIntentForPackage(context.packageName)
-                        val componentName = intent?.component
-                        val mainIntent = Intent.makeRestartActivityTask(componentName)
-                        context.startActivity(mainIntent)
-                        Runtime.getRuntime().exit(0)
-                    }
-                    .show()
-            } else {
-                Toast.makeText(context, "⛔ Kode Salah / Sudah Expired!", Toast.LENGTH_SHORT).show()
-            }
-        }
+       // Cari bagian ini di file MainActivity.kt Anda:
+btnUnlock.setOnClickListener {
+    val code = inputCode.text.toString()
+    val deviceId = PremiumManager.getDeviceId(context) // Mendapatkan ID perangkat
 
+    if (PremiumManager.activatePremiumWithCode(context, code, deviceId)) {
+        // Menutup dialog aktivasi
+        (btnUnlock.tag as? AlertDialog)?.dismiss()
+        
+        // Memaksa Aplikasi Restart agar Repo Berubah
+        AlertDialog.Builder(context)
+            .setTitle("Premium Berhasil!")
+            .setMessage("Aplikasi akan restart untuk mengaktifkan Playlist Premium.")
+            .setCancelable(false)
+            .setPositiveButton("OK") { _, _ ->
+                // Perintah Restart Aplikasi
+                val componentName = intent?.component
+                val mainIntent = Intent.makeRestartActivityTask(componentName)
+                context.startActivity(mainIntent)
+                Runtime.getRuntime().exit(0) // Keluar dan mulai ulang
+            }
+            .show()
+    } else {
+        Toast.makeText(context, "⛔ Kode tidak boleh kosong!", Toast.LENGTH_SHORT).show()
+    }
+}
         // Menyusun Layout
         layout.addView(icon)
         layout.addView(title)
