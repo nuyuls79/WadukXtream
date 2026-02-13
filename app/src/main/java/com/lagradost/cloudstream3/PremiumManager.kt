@@ -16,10 +16,9 @@ object PremiumManager {
     const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/aldry84/Repo_Premium/refs/heads/builds/repo.json"
     const val FREE_REPO_URL = "https://raw.githubusercontent.com/michat88/Repo_Gratis/refs/heads/builds/repo.json"
 
-    // Ambil ID perangkat murni tanpa proses hashCode yang rumit
+    // Mengambil ID perangkat tanpa proses hashCode yang rumit
     fun getDeviceId(context: Context): String {
         val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "00000000"
-        // Ambil 8 karakter terakhir dari Android ID agar simpel
         return androidId.takeLast(8).uppercase()
     }
 
@@ -30,6 +29,7 @@ object PremiumManager {
         return try {
             val input = deviceId + SALT
             val md = MessageDigest.getInstance("MD5")
+            // Menggunakan Charsets.UTF_8 agar hasil MD5 selalu konsisten
             val bytes = md.digest(input.toByteArray(Charsets.UTF_8))
             
             bytes.joinToString("") { "%02x".format(it) }
@@ -51,6 +51,7 @@ object PremiumManager {
             val prefs = PreferenceManager.getDefaultSharedPreferences(context)
             prefs.edit().apply {
                 putBoolean(PREF_IS_PREMIUM, true)
+                // Menggunakan nilai maksimal agar status premium tidak pernah mati
                 putLong(PREF_EXPIRY_DATE, Long.MAX_VALUE) 
                 apply()
             }
@@ -59,6 +60,7 @@ object PremiumManager {
         return false
     }
 
+    // Fungsi isPremium sekarang hanya mengecek boolean saja, tidak mengecek waktu
     fun isPremium(context: Context): Boolean {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         return prefs.getBoolean(PREF_IS_PREMIUM, false)
