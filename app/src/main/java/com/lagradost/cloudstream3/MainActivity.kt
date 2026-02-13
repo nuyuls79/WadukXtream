@@ -57,23 +57,20 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // --- FIXED: AUTO REPAIR LINK 404 (Baris 115) ---
+        // --- AUTO-FIX URL 404 & HASIL 0 ---
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        // Paksa ganti URL ke RepoPremium yang benar (tanpa underscore)
+        // Kita paksa link ke RepoPremium (alamat baru tanpa underscore)
         prefs.edit().apply {
             putString("app_repository_url", "https://raw.githubusercontent.com/aldry84/RepoPremium/main/repo.json")
             putBoolean("is_premium_user", true)
-            // Hapus cache agar proses "Mengunduh" muncul otomatis
-            remove("app_repository_cache")
+            remove("app_repository_cache") // Hapus cache agar download ulang otomatis
             apply()
         }
-        // -----------------------------------------------
+        // ----------------------------------
 
         setContentView(R.layout.activity_main)
-        // ... kode internal cloudstream lainnya ...
     }
 
-    // Fungsi Dialog Premium yang diperbaiki logikanya
     fun showPremiumDialog(context: Context) {
         val deviceId = PremiumManager.getDeviceId(context)
         val scroll = ScrollView(context)
@@ -88,12 +85,17 @@ class MainActivity : AppCompatActivity() {
         }
         scroll.addView(layout)
 
+        val icon = ImageView(context).apply {
+            setImageResource(R.drawable.ic_launcher_foreground)
+            layoutParams = LinearLayout.LayoutParams(180, 180).apply { setMargins(0, 0, 0, 30) }
+        }
+
         val title = TextView(context).apply {
             text = "WADUKXTREAM PREMIUM"
-            textSize = 22f
+            textSize = 24f
+            setTypeface(null, android.graphics.Typeface.BOLD)
             setTextColor(android.graphics.Color.WHITE)
             gravity = Gravity.CENTER
-            setPadding(0, 20, 0, 10)
         }
 
         val subTitle = TextView(context).apply {
@@ -101,44 +103,68 @@ class MainActivity : AppCompatActivity() {
             textSize = 14f
             setTextColor(android.graphics.Color.GRAY)
             gravity = Gravity.CENTER
+            setPadding(0, 10, 0, 40)
         }
+
+        val idContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(30, 20, 30, 20)
+            background = GradientDrawable().apply {
+                setColor(android.graphics.Color.parseColor("#252525"))
+                cornerRadius = 15f
+            }
+        }
+        
+        idContainer.addView(TextView(context).apply {
+            text = "ID PERANGKAT ANDA"
+            textSize = 10f
+            setTextColor(android.graphics.Color.LTGRAY)
+        })
+        
+        idContainer.addView(TextView(context).apply {
+            text = deviceId
+            textSize = 18f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(android.graphics.Color.parseColor("#FFD700"))
+        })
 
         val inputCode = EditText(context).apply {
             hint = "Masukkan Kode Unlock"
             setHintTextColor(android.graphics.Color.GRAY)
             setTextColor(android.graphics.Color.WHITE)
             gravity = Gravity.CENTER
+            setPadding(0, 40, 0, 20)
             background = null
         }
 
         val btnUnlock = Button(context).apply {
-            text = "UNLOCK NOW"
+            text = "UNLOCK PREMIUM"
+            textSize = 16f
+            setTypeface(null, android.graphics.Typeface.BOLD)
             setTextColor(android.graphics.Color.WHITE)
+            layoutParams = LinearLayout.LayoutParams(-1, 130).apply { setMargins(0, 40, 0, 20) }
             background = GradientDrawable().apply {
                 setColor(android.graphics.Color.parseColor("#E50914"))
-                cornerRadius = 20f
+                cornerRadius = 25f
             }
         }
 
-        // --- FIXED: LOGIKA TOMBOL UNLOCK & RESTART ---
         btnUnlock.setOnClickListener {
             val code = inputCode.text.toString()
-            // Apapun kodenya akan sukses karena kita sudah bypass di PremiumManager
-            if (code.isNotEmpty()) {
+            if (PremiumManager.activatePremiumWithCode(context, code, deviceId)) {
                 (btnUnlock.tag as? AlertDialog)?.dismissSafe()
                 
                 AlertDialog.Builder(context)
                     .setTitle("Berhasil!")
-                    .setMessage("Repo Premium akan diunduh. Aplikasi akan restart.")
+                    .setMessage("Premium Aktif! Aplikasi akan memuat ulang data.")
                     .setCancelable(false)
                     .setPositiveButton("OK") { _, _ ->
-                        // Hapus cache satu kali lagi sebelum restart
                         PreferenceManager.getDefaultSharedPreferences(context).edit().apply {
                             remove("app_repository_cache")
                             apply()
                         }
                         
-                        // Restart Aplikasi
                         val componentName = intent?.component
                         val mainIntent = Intent.makeRestartActivityTask(componentName)
                         context.startActivity(mainIntent)
@@ -146,16 +172,17 @@ class MainActivity : AppCompatActivity() {
                     }
                     .show()
             } else {
-                Toast.makeText(context, "Kode tidak boleh kosong!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "⛔ Kode Tidak Valid!", Toast.LENGTH_SHORT).show()
             }
         }
 
+        layout.addView(icon)
         layout.addView(title)
         layout.addView(subTitle)
-        layout.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(-1, 40) })
+        layout.addView(idContainer)
         layout.addView(inputCode)
         layout.addView(View(context).apply { 
-            layoutParams = LinearLayout.LayoutParams(-1, 2).apply { setMargins(0,0,0,40) }
+            layoutParams = LinearLayout.LayoutParams(-1, 2).apply { setMargins(60, 0, 60, 20) }
             setBackgroundColor(android.graphics.Color.GRAY) 
         })
         layout.addView(btnUnlock)
