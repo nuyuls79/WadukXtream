@@ -9,8 +9,9 @@ import java.util.Locale
 object PremiumManager {
     private const val PREF_IS_PREMIUM = "is_premium_user"
     private const val PREF_EXPIRY_DATE = "premium_expiry_date"
-    private const val SALT = "ADIXTREAM_SECRET_KEY_2026_SECURE"
+    private const val SALT = "ADIXTREAM_SECRET_KEY_2026_SECURE" 
 
+    // URL Repo Anda
     const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/aldry84/Repo_Premium/refs/heads/builds/repo.json"
     const val FREE_REPO_URL = "https://raw.githubusercontent.com/michat88/Repo_Gratis/refs/heads/builds/repo.json"
 
@@ -20,7 +21,7 @@ object PremiumManager {
     }
 
     /**
-     * KUNCI OTOMATIS: Fungsi ini yang menentukan repo mana yang muncul di aplikasi.
+     * FUNGSI KRUSIAL: Menentukan URL mana yang harus dimuat oleh aplikasi.
      */
     fun getCurrentRepoUrl(context: Context): String {
         return if (isPremium(context)) PREMIUM_REPO_URL else FREE_REPO_URL
@@ -43,8 +44,8 @@ object PremiumManager {
             val prefs = PreferenceManager.getDefaultSharedPreferences(context)
             prefs.edit().apply {
                 putBoolean(PREF_IS_PREMIUM, true)
-                putLong(PREF_EXPIRY_DATE, Long.MAX_VALUE)
-                // Hapus cache lama agar sistem terpaksa membaca URL Premium
+                putLong(PREF_EXPIRY_DATE, Long.MAX_VALUE) 
+                // Membersihkan cache agar aplikasi memuat ulang repo yang baru
                 remove("app_repository_cache") 
                 apply()
             }
@@ -54,18 +55,21 @@ object PremiumManager {
     }
 
     fun isPremium(context: Context): Boolean {
-        // Ganti 'return true' jika ingin bypass tanpa kode sama sekali
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         return prefs.getBoolean(PREF_IS_PREMIUM, false)
     }
 
+    // Fungsi ini ditambahkan kembali agar Build Signed APK tidak error
     fun getExpiryDateString(context: Context): String {
         return if (isPremium(context)) "Lifetime Premium" else "Non-Premium"
     }
-    
-    // Fungsi tambahan untuk memperbaiki error build di MainActivity
+
     fun deactivatePremium(context: Context) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        prefs.edit().putBoolean(PREF_IS_PREMIUM, false).apply()
+        prefs.edit().apply {
+            putBoolean(PREF_IS_PREMIUM, false)
+            putLong(PREF_EXPIRY_DATE, 0)
+            apply()
+        }
     }
 }
