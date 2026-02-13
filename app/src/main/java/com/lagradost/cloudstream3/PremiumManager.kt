@@ -7,7 +7,6 @@ import androidx.preference.PreferenceManager
 object PremiumManager {
     private const val PREF_IS_PREMIUM = "is_premium_user"
     
-    // URL Repository Anda
     const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/aldry84/Repo_Premium/refs/heads/builds/repo.json"
     const val FREE_REPO_URL = "https://raw.githubusercontent.com/michat88/Repo_Gratis/refs/heads/builds/repo.json"
 
@@ -16,20 +15,20 @@ object PremiumManager {
         return prefs.getBoolean(PREF_IS_PREMIUM, false)
     }
 
-    // Fungsi untuk mendapatkan URL yang aktif
+    // Menentukan URL mana yang harus didownload aplikasi
     fun getCurrentRepoUrl(context: Context): String {
         return if (isPremium(context)) PREMIUM_REPO_URL else FREE_REPO_URL
     }
 
     fun activatePremiumWithCode(context: Context, code: String, deviceId: String): Boolean {
-        // BYPASS: Kode apapun yang Anda masukkan akan dianggap benar
         if (code.isBlank()) return false
         
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         prefs.edit().apply {
             putBoolean(PREF_IS_PREMIUM, true)
-            // Hapus cache repo agar Cloudstream membaca URL Premium setelah restart
+            // HAPUS SEMUA CACHE REPO LAMA
             remove("app_repository_cache")
+            remove("plugins_cache") 
             apply()
         }
         return true
@@ -40,13 +39,7 @@ object PremiumManager {
         return androidId.takeLast(8).uppercase()
     }
 
-    // Menambahkan kembali fungsi ini agar build MainActivity sukses
     fun getExpiryDateString(context: Context): String {
         return if (isPremium(context)) "Lifetime Premium" else "Non-Premium"
-    }
-
-    fun deactivatePremium(context: Context) {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        prefs.edit().putBoolean(PREF_IS_PREMIUM, false).apply()
     }
 }
