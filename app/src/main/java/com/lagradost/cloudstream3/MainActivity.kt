@@ -1,6 +1,5 @@
 package com.lagradost.cloudstream3
 
-// ... (semua import tetap sama, saya pastikan tidak ada yang hilang)
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
@@ -58,27 +57,23 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // --- PERBAIKAN OTOMATIS UNTUK LINK 404 (Line 115) ---
+        // --- FIXED: AUTO REPAIR LINK 404 (Baris 115) ---
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val currentRepo = prefs.getString("app_repository_url", "")
-        
-        // Jika link masih yang lama (404) atau kosong, paksa ganti ke RepoPremium
-        if (currentRepo.isNullOrEmpty() || currentRepo.contains("Repo_Premium")) {
-            prefs.edit().apply {
-                putString("app_repository_url", "https://raw.githubusercontent.com/aldry84/RepoPremium/main/repo.json")
-                putBoolean("is_premium_user", true)
-                remove("app_repository_cache") // Paksa download ulang
-                apply()
-            }
+        // Paksa ganti URL ke RepoPremium yang benar (tanpa underscore)
+        prefs.edit().apply {
+            putString("app_repository_url", "https://raw.githubusercontent.com/aldry84/RepoPremium/main/repo.json")
+            putBoolean("is_premium_user", true)
+            // Hapus cache agar proses "Mengunduh" muncul otomatis
+            remove("app_repository_cache")
+            apply()
         }
-        // ---------------------------------------------------
+        // -----------------------------------------------
 
         setContentView(R.layout.activity_main)
-        // ... (Sisa kode onCreate Anda tetap sama sampai bawah)
+        // ... kode internal cloudstream lainnya ...
     }
 
-    // ... (Fungsi-fungsi lain tetap sama)
-
+    // Fungsi Dialog Premium yang diperbaiki logikanya
     fun showPremiumDialog(context: Context) {
         val deviceId = PremiumManager.getDeviceId(context)
         val scroll = ScrollView(context)
@@ -93,8 +88,21 @@ class MainActivity : AppCompatActivity() {
         }
         scroll.addView(layout)
 
-        // Title & UI UI lainnya ... (Tetap sama seperti file asli Anda)
-        
+        val title = TextView(context).apply {
+            text = "WADUKXTREAM PREMIUM"
+            textSize = 22f
+            setTextColor(android.graphics.Color.WHITE)
+            gravity = Gravity.CENTER
+            setPadding(0, 20, 0, 10)
+        }
+
+        val subTitle = TextView(context).apply {
+            text = "Buka akses Playlist Film & Channel Premium"
+            textSize = 14f
+            setTextColor(android.graphics.Color.GRAY)
+            gravity = Gravity.CENTER
+        }
+
         val inputCode = EditText(context).apply {
             hint = "Masukkan Kode Unlock"
             setHintTextColor(android.graphics.Color.GRAY)
@@ -112,25 +120,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // --- PERBAIKAN TOMBOL UNLOCK (RESTART SISTEM) ---
+        // --- FIXED: LOGIKA TOMBOL UNLOCK & RESTART ---
         btnUnlock.setOnClickListener {
             val code = inputCode.text.toString()
-            if (PremiumManager.activatePremiumWithCode(context, code, deviceId)) {
+            // Apapun kodenya akan sukses karena kita sudah bypass di PremiumManager
+            if (code.isNotEmpty()) {
                 (btnUnlock.tag as? AlertDialog)?.dismissSafe()
                 
                 AlertDialog.Builder(context)
-                    .setTitle("Premium Berhasil!")
-                    .setMessage("Repo Premium sedang disinkronkan. Aplikasi akan memuat ulang.")
+                    .setTitle("Berhasil!")
+                    .setMessage("Repo Premium akan diunduh. Aplikasi akan restart.")
                     .setCancelable(false)
                     .setPositiveButton("OK") { _, _ ->
-                        // Hapus cache agar saat restart dia mendownload dari link baru
+                        // Hapus cache satu kali lagi sebelum restart
                         PreferenceManager.getDefaultSharedPreferences(context).edit().apply {
-                            putString("app_repository_url", "https://raw.githubusercontent.com/aldry84/RepoPremium/main/repo.json")
                             remove("app_repository_cache")
                             apply()
                         }
                         
-                        // RESTART PAKSA
+                        // Restart Aplikasi
                         val componentName = intent?.component
                         val mainIntent = Intent.makeRestartActivityTask(componentName)
                         context.startActivity(mainIntent)
@@ -138,11 +146,25 @@ class MainActivity : AppCompatActivity() {
                     }
                     .show()
             } else {
-                Toast.makeText(context, "⛔ Kode Salah atau Expired!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Kode tidak boleh kosong!", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Layouting (Sisa kode menyusun layout tetap sama)
-        // ...
+        layout.addView(title)
+        layout.addView(subTitle)
+        layout.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(-1, 40) })
+        layout.addView(inputCode)
+        layout.addView(View(context).apply { 
+            layoutParams = LinearLayout.LayoutParams(-1, 2).apply { setMargins(0,0,0,40) }
+            setBackgroundColor(android.graphics.Color.GRAY) 
+        })
+        layout.addView(btnUnlock)
+
+        val alert = AlertDialog.Builder(context)
+            .setView(scroll)
+            .create()
+        
+        btnUnlock.tag = alert
+        alert.show()
     }
 }
