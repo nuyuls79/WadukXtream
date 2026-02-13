@@ -50,6 +50,8 @@ import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
+// Import PremiumManager agar bisa membedakan URL repo
+import com.lagradost.cloudstream3.PremiumManager
 // -----------------------
 
 class SettingsFragment : BaseFragment<MainSettingsBinding>(
@@ -200,17 +202,26 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         }
 
         binding.apply {
-            
-            // --- 1. MODIFIKASI: BYPASS MASUK LANGSUNG KE PLUGINS ---
+
+            // --- 1. MODIFIKASI: BYPASS MASUK LANGSUNG KE PLUGINS (DIPERBAIKI) ---
             settingsExtensions.setOnClickListener {
                 try {
                     val bundle = Bundle()
-                    // Nama yang akan muncul di header toolbar
-                    bundle.putString("name", "AdiManuLateri3") 
-                    // URL Repository kamu (WAJIB SAMA PERSIS DENGAN MAIN ACTIVITY)
-                    bundle.putString("url", "https://raw.githubusercontent.com/michat88/AdiManuLateri3/refs/heads/builds/repo.json") 
+                    val context = requireContext()
+
+                    // Cek Status Premium User
+                    val isPremium = PremiumManager.isPremium(context)
+
+                    // Tentukan Nama Repo & URL berdasarkan status Premium/Gratis
+                    // Mengambil URL langsung dari PremiumManager agar sinkron dengan MainActivity
+                    val repoName = if (isPremium) "Repository Premium" else "Repository Gratis"
+                    val repoUrl = if (isPremium) PremiumManager.PREMIUM_REPO_URL else PremiumManager.FREE_REPO_URL
+
+                    // Masukkan ke Bundle
+                    bundle.putString("name", repoName)
+                    bundle.putString("url", repoUrl)
                     bundle.putBoolean("isLocal", false)
-                    
+
                     // Navigasi langsung ke PluginsFragment, melewati ExtensionsFragment
                     activity?.navigate(R.id.navigation_settings_plugins, bundle)
                 } catch (e: Exception) {
@@ -224,7 +235,7 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                 val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
                 builder.setTitle("Tentang AdiXtream")
                 builder.setMessage("AdiXtream dikembangkan oleh michat88.\n\nAplikasi ini berbasis pada proyek open-source CloudStream.\n\nTerima kasih kepada Developer CloudStream (Lagradost & Tim) atas kode sumber yang luar biasa ini.")
-                
+
                 builder.setNeutralButton("Kode Sumber") { _, _ ->
                     try {
                         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/michat88/AdiXtream"))
