@@ -1690,28 +1690,33 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
        // Cari bagian ini di file MainActivity.kt Anda:
 btnUnlock.setOnClickListener {
     val code = inputCode.text.toString()
-    val deviceId = PremiumManager.getDeviceId(context) // Mendapatkan ID perangkat
+    val deviceId = PremiumManager.getDeviceId(context)
 
     if (PremiumManager.activatePremiumWithCode(context, code, deviceId)) {
-        // Menutup dialog aktivasi
+        // Tutup dialog
         (btnUnlock.tag as? AlertDialog)?.dismiss()
         
-        // Memaksa Aplikasi Restart agar Repo Berubah
         AlertDialog.Builder(context)
-            .setTitle("Premium Berhasil!")
-            .setMessage("Aplikasi akan restart untuk mengaktifkan Playlist Premium.")
+            .setTitle("Aktivasi Berhasil!")
+            .setMessage("Repo Premium akan diunduh. Aplikasi akan memulai ulang otomatis.")
             .setCancelable(false)
             .setPositiveButton("OK") { _, _ ->
-                // Perintah Restart Aplikasi
+                // Memaksa sistem Cloudstream untuk membersihkan repository lama
+                context.getSharedPreferences("cloudstream_prefs", Context.MODE_PRIVATE).edit().clear().apply()
+                
+                // Restart Aplikasi
                 val componentName = intent?.component
                 val mainIntent = Intent.makeRestartActivityTask(componentName)
                 context.startActivity(mainIntent)
-                Runtime.getRuntime().exit(0) // Keluar dan mulai ulang
+                
+                // Keluar sepenuhnya agar proses download dipicu saat start up baru
+                Runtime.getRuntime().exit(0)
             }
             .show()
     } else {
         Toast.makeText(context, "⛔ Kode tidak boleh kosong!", Toast.LENGTH_SHORT).show()
     }
+
 }
         // Menyusun Layout
         layout.addView(icon)
