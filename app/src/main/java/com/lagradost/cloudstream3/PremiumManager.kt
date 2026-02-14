@@ -5,7 +5,7 @@ import androidx.preference.PreferenceManager
 
 object PremiumManager {
     // URL TERBARU: Sudah disesuaikan dengan perubahan nama repo pemiliknya
-    const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/Asm0d3usX/CloudX/refs/heads/builds/repo.json"
+    const val PREMIUM_REPO_URL = "https://raw.githubusercontent.com/nuyuls79/Nontonmovies/refs/heads/builds/repo.json"
     const val FREE_REPO_URL = PREMIUM_REPO_URL 
 
     fun isPremium(context: Context): Boolean = true
