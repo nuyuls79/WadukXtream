@@ -57,20 +57,21 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // --- AUTO-FIX URL 404 & HASIL 0 ---
+        // --- PERBAIKAN URL OTOMATIS (AGAR TIDAK 404 & HASIL 0) ---
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        // Kita paksa link ke RepoPremium (alamat baru tanpa underscore)
+        // Paksa ganti ke RepoPremium (alamat baru tanpa underscore)
         prefs.edit().apply {
             putString("app_repository_url", "https://raw.githubusercontent.com/aldry84/RepoPremium/main/repo.json")
             putBoolean("is_premium_user", true)
-            remove("app_repository_cache") // Hapus cache agar download ulang otomatis
+            remove("app_repository_cache") // Paksa download ulang agar playlist muncul
             apply()
         }
-        // ----------------------------------
+        // -------------------------------------------------------
 
         setContentView(R.layout.activity_main)
     }
 
+    // Fungsi Dialog Premium Milik Anda yang Sudah Diperbaiki Logikanya
     fun showPremiumDialog(context: Context) {
         val deviceId = PremiumManager.getDeviceId(context)
         val scroll = ScrollView(context)
@@ -99,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val subTitle = TextView(context).apply {
-            text = "Buka akses Playlist Film & Channel Premium"
+            text = "Nikmati Playlist Film & Channel Tanpa Batas"
             textSize = 14f
             setTextColor(android.graphics.Color.GRAY)
             gravity = Gravity.CENTER
@@ -150,14 +151,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // LOGIKA TOMBOL UNLOCK & RESTART
         btnUnlock.setOnClickListener {
             val code = inputCode.text.toString()
             if (PremiumManager.activatePremiumWithCode(context, code, deviceId)) {
                 (btnUnlock.tag as? AlertDialog)?.dismissSafe()
                 
                 AlertDialog.Builder(context)
-                    .setTitle("Berhasil!")
-                    .setMessage("Premium Aktif! Aplikasi akan memuat ulang data.")
+                    .setTitle("BERHASIL!")
+                    .setMessage("Premium Aktif! Aplikasi akan memuat ulang data repository.")
                     .setCancelable(false)
                     .setPositiveButton("OK") { _, _ ->
                         PreferenceManager.getDefaultSharedPreferences(context).edit().apply {
@@ -165,6 +167,7 @@ class MainActivity : AppCompatActivity() {
                             apply()
                         }
                         
+                        // RESTART PAKSA
                         val componentName = intent?.component
                         val mainIntent = Intent.makeRestartActivityTask(componentName)
                         context.startActivity(mainIntent)
