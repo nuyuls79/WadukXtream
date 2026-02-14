@@ -233,12 +233,12 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
             // --- 2. LOGIKA TOMBOL TENTANG (WARNA MERAH PUTIH) ---
             settingsAbout.setOnClickListener {
                 val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
-                builder.setTitle("Tentang AdiXtream")
-                builder.setMessage("AdiXtream dikembangkan oleh michat88.\n\nAplikasi ini berbasis pada proyek open-source CloudStream.\n\nTerima kasih kepada Developer CloudStream (Lagradost & Tim) atas kode sumber yang luar biasa ini.")
+                builder.setTitle("Waduk Xtream")
+                builder.setMessage("Waduk Xtream dibuat  oleh Waduk Team 2026.\n\nAplikasi ini berbasis pada proyek  open-source CloudStream.\n\nTerima kasih kepada Developer CloudStream (Lagradost & Tim) & me chat eighty eight atas kode sumber yang luar biasa ini.")
 
                 builder.setNeutralButton("Kode Sumber") { _, _ ->
                     try {
-                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/michat88/AdiXtream"))
+                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/recloudstream/cloudstream/releases"))
                         startActivity(browserIntent)
                     } catch (e: Exception) {
                         e.printStackTrace()
