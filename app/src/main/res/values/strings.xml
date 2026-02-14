@@ -48,7 +48,7 @@
     <string name="download_parallel_key" translatable="false">download_parallel_key</string>
     <string name="download_concurrent_key" translatable="false">download_concurrent_key</string>
     <string name="download_path_key_visual" translatable="false">download_path_key_visual</string>
-    <string name="app_name_download_path" translatable="false">AdiXtream</string>
+    <string name="app_name_download_path" translatable="false">WadukXtream</string>
     <string name="app_layout_key" translatable="false">app_layout_key</string>
     <string name="primary_color_key" translatable="false">primary_color_key</string>
     <string name="restore_key" translatable="false">restore_key</string>
@@ -111,7 +111,7 @@
     <string name="filler" formatted="true">Filler</string>
     <string name="duration_format" formatted="true">%d min</string>
     <string name="app_name">Waduk</string>
-    <string name="play_with_app_name">Play with AdiXtream</string>
+    <string name="play_with_app_name">Play with WadukXtream</string>
     <string name="title_home">Home</string>
     <string name="title_search">Search</string>
     <string name="title_downloads">Downloads</string>
@@ -439,13 +439,13 @@
     <string name="resize_zoom">Zoom</string>
     <string name="legal_notice">Disclaimer</string>
     <string name="legal_notice_key" translatable="false">legal_notice_key</string>
-    <string name="legal_notice_text" translatable="false">ATTENTION: AdiXtream is a media browser tool. This application works as an advanced search engine that collects links from the internet.
+    <string name="legal_notice_text" translatable="false">ATTENTION: WadukXtream is a media browser tool. This application works as an advanced search engine that collects links from the internet.
 
-        \n\nIMPORTANT: Extensions or Providers with the "Adi" label (such as AdiDrakor, Adicinemax21, etc.) are just BRANDS FOR SEARCH SCRIPTS (Scrapers) that we developed to facilitate access to public websites. We do NOT have any relationship, affiliation, or ownership of the source websites targeted by those scripts.
+        \n\nIMPORTANT: Extensions or Providers with the "Waduk" label (such as Nomat, Layar Kaca, etc.) are just BRANDS FOR SEARCH SCRIPTS (Scrapers) that we developed to facilitate access to public websites. We do NOT have any relationship, affiliation, or ownership of the source websites targeted by those scripts.
 
-        \n\nAdiXtream developers do not store, upload, or manage any video content on our servers. All content is fetched in real-time from third-party sites available to the public.
+        \n\nWadukXtream developers do not store, upload, or manage any video content on our servers. All content is fetched in real-time from third-party sites available to the public.
 
-        \n\nBy using this application, you understand that "AdiXtream" is just a connection tool (bridge), and all legal risks regarding copyright are the full responsibility of the user and the respective hosting website owners.
+        \n\nBy using this application, you understand that "WadukXtream" is just a connection tool (bridge), and all legal risks regarding copyright are the full responsibility of the user and the respective hosting website owners.
     </string>
     <string name="pref_category_bypass">ISP Bypasses</string>
     <string name="pref_category_links">Links</string>
@@ -613,13 +613,13 @@
     <string name="plugins_disabled" formatted="true">Disabled: %d</string>
     <string name="plugins_not_downloaded" formatted="true">Not downloaded: %d</string>
     <string name="plugins_updated" formatted="true">Updated %d plugins</string>
-    <string name="blank_repo_message">AdiXtream has no sites installed by default. You need to install the sites from repositories.
+    <string name="blank_repo_message">WadukXtream has no sites installed by default. You need to install the sites from repositories.
 \n
 \nJoin our Discord or search online.</string>
     <string name="view_public_repositories_button">View community repositories</string>
     <string name="view_public_repositories_button_short">Public list</string>
     <string name="uppercase_all_subtitles">Uppercase all subtitles</string>
-    <string name="download_all_plugins_from_repo">Warning: AdiXtream does not take any responsibility for using third-party extensions and does not provide any support for them!</string>
+    <string name="download_all_plugins_from_repo">Warning: WadukXtream does not take any responsibility for using third-party extensions and does not provide any support for them!</string>
     <string name="single_plugin_disabled" formatted="true">%s (Disabled)</string>
     <string name="tracks">Tracks</string>
     <string name="audio_tracks">Audio tracks</string>
@@ -670,12 +670,12 @@
     <string name="open_downloaded_repo">Open repository</string>
     <string name="battery_dialog_title">Disable Battery optimization</string>
     <string name="battery_dialog_message">To ensure uninterrupted downloads and notifications for subscribed
-        TV shows, AdiXtream needs permission to run in background. By pressing "OK", you\'ll be shown a request dialog.
-        Please press \'Allow\'.\n\nPlease note, this permission does not mean AdiXtream will drain your battery. It will only operate in the background when necessary, such as
+        TV shows, WadukXtream needs permission to run in background. By pressing "OK", you\'ll be shown a request dialog.
+        Please press \'Allow\'.\n\nPlease note, this permission does not mean WadukXtream will drain your battery. It will only operate in the background when necessary, such as
         when receiving notifications or downloading videos from official extensions.</string>
     <string name="battery_optimisation_key" translatable="false">battery_optimisation</string>
     <string name="app_unrestricted_toast">App battery usage is already set to unrestricted</string>
-    <string name="app_info_intent_error">Unable to open AdiXtream\'s App info.</string>
+    <string name="app_info_intent_error">Unable to open WadukXtream\'s App info.</string>
     <string name="update_notification_downloading">Downloading app update…</string>
     <string name="update_notification_installing">Installing app update…</string>
     <string name="update_notification_failed">Could not install the new version of the app</string>
@@ -777,15 +777,15 @@
     <string name="auto_rotate_video">Auto rotate</string>
     <string name="favorite">Favorite</string>
     <string name="unfavorite">Unfavorite</string>
-    <string name="biometric_authentication_title">Unlock AdiXtream</string>
+    <string name="biometric_authentication_title">Unlock WadukXtream</string>
     <string name="biometric_setting">Lock with Biometrics</string>
     <string name="password_pin_authentication_title">Password/PIN Authentication</string>
     <string name="biometric_unsupported">Biometric authentication is not supported on this device</string>
     <string name="biometric_setting_summary">Unlock the app with Fingerprint, Face ID, PIN, Pattern and Password.</string>
     <string name="biometric_prompt_description">After a few failed attempts, the prompt will close. Simply restart the app to try again.</string>
-    <string name="biometric_warning">Your AdiXtream data has been backed up now. Although the possibility of this is very low, all devices can behave differently. In the rare case, that you get locked out from accessing the app, clear the app data completely and restore from a backup. We are very sorry for any inconvenience arising from this.</string>
+    <string name="biometric_warning">Your WadukXtream data has been backed up now. Although the possibility of this is very low, all devices can behave differently. In the rare case, that you get locked out from accessing the app, clear the app data completely and restore from a backup. We are very sorry for any inconvenience arising from this.</string>
     <string name="reset_btn">Reset</string>
-    <string name="cs3wiki">AdiXtream Wiki</string>
+    <string name="cs3wiki">WadukXtream Wiki</string>
     <string name="device_pin_url_message">Visit <b>%s</b> on your smartphone or computer and enter the above code</string>
     <string name="device_pin_error_message">Can\'t get the device PIN code, try local authentication</string>
     <string name="device_pin_expired_message">PIN code is now expired !</string>
