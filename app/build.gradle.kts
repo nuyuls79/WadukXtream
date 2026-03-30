@@ -61,7 +61,7 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInt()
         
         versionCode = 770
-        versionName = "4.7.1"
+        versionName = "4.7.11"
 
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
