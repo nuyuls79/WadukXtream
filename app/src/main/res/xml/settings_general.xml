@@ -9,13 +9,15 @@
     <Preference
         android:icon="@drawable/ic_baseline_warning_24"
         android:key="@string/legal_notice_key"
-        android:title="@string/legal_notice" />
-
+        android:title="@string/legal_notice"
+        android:visible="false" />
+    
     <Preference
         android:icon="@drawable/benene"
         android:key="@string/benene_count"
         android:title="@string/benene"
-        app:summary="@string/benene_des" />
+        app:summary="@string/benene_des"
+        android:visible="false" />
 
     <PreferenceCategory android:title="@string/title_downloads">
 
