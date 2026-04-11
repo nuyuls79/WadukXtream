@@ -203,7 +203,11 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
 
         binding.apply {
 
-            // --- 1. MODIFIKASI: BYPASS MASUK LANGSUNG KE PLUGINS (DIPERBAIKI) ---
+             // Sembunyikan menu Ekstensi dan Tentang
+                settingsExtensions.visibility = View.GONE
+                settingsAbout.visibility = View.GONE
+                
+            // --- 1. MODIFIKASI: BYPASS MASUK LANGSUNG KE PLUGINS ---
             settingsExtensions.setOnClickListener {
                 try {
                     val bundle = Bundle()
