@@ -1,44 +1,57 @@
-name: Build Release (FINAL1 FIX)
+name: Build Release (Auto Release)
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [ master, main ]
+workflow_dispatch:
+push:
+branches: [ master, main ]
 
 jobs:
-  build:
-    name: Build Signed APK
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+build:
+name: Build Signed APK
+runs-on: ubuntu-latest
 
-      - name: Siapkan Java (JDK 17)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'gradle'
+steps:
+  - name: Checkout Code
+    uses: actions/checkout@v4
 
-      - name: Decode Keystore
-        run: |
-          # Menggunakan printf untuk keamanan data binary
-          printf '%s' "${{ secrets.SIGNING_KEY }}" | base64 --decode > app/release.keystore
+  - name: Setup Java (JDK 17)
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: "17"
+      cache: gradle
 
-      - name: Izinkan Gradle
-        run: chmod +x gradlew
+  - name: Decode Keystore
+    run: |
+      printf '%s' "${{ secrets.SIGNING_KEY }}" | base64 --decode > app/release.keystore
 
-      - name: Mulai Proses Build
-        run: ./gradlew assembleStableRelease
-        env:
-          KEYSTORE_PATH: release.keystore
-          ALIAS: ${{ secrets.ALIAS }}
-          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+  - name: Grant Execute Permission
+    run: chmod +x gradlew
 
-      - name: Upload APK ke GitHub
-        uses: actions/upload-artifact@v4
-        with:
-          name: WadukXtream-Release
-          path: app/build/outputs/apk/stable/release/*.apk
+  - name: Build APK
+    run: ./gradlew assembleStableRelease
+    env:
+      KEYSTORE_PATH: release.keystore
+      ALIAS: ${{ secrets.ALIAS }}
+      KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+  - name: Rename APK
+    run: |
+      mkdir release
+      cp app/build/outputs/apk/stable/release/*.apk release/WadukXtream_${{ github.run_number }}.apk
+
+  - name: Upload Artifact (Download Manual)
+    uses: actions/upload-artifact@v4
+    with:
+      name: WadukXtream-Build
+      path: release/*.apk
+
+  - name: Create GitHub Release
+    uses: softprops/action-gh-release@v2
+    with:
+      tag_name: v${{ github.run_number }}
+      name: WadukXtream v${{ github.run_number }}
+      files: release/*.apk
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
