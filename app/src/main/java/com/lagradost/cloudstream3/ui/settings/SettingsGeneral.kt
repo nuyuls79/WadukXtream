@@ -168,6 +168,10 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_general, rootKey)
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        
+        // Sembunyikan menu yang tidak ingin ditampilkan
+        getPref(R.string.legal_notice_key)?.isVisible = false
+        getPref(R.string.benene_count)?.isVisible = false
 
         fun getCurrent(): MutableList<CustomSite> {
             return getKey<Array<CustomSite>>(USER_PROVIDER_API)?.toMutableList()
@@ -386,12 +390,12 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         try {
             getPref(R.string.benene_count)?.let { pref ->
                 // UBAH LOGIKA DI SINI: Langsung buka link Saweria
-                pref.summary = "Dukung pengembangan AdiXtream di Saweria" // Ubah teks ringkasan agar sesuai
+                pref.summary = "Dukung pengembangan WadukXtream di Saweria" // Ubah teks ringkasan agar sesuai
                 
                 pref.setOnPreferenceClickListener {
                     try {
                         // Link donasi Saweria milikmu
-                        val url = "https://saweria.co/michat88"
+                        val url = "https://saweria.co/wadadah12"
                         val i = android.content.Intent(android.content.Intent.ACTION_VIEW)
                         i.data = android.net.Uri.parse(url)
                         startActivity(i)
